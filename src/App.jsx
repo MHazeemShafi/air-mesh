@@ -36,8 +36,8 @@ const POLLUTANTS = [
   { id: 'pm25', name: 'PM2.5', description: 'Fine particulate matter', icon: Cloud },
   { id: 'pm10', name: 'PM10', description: 'Coarse particulate matter', icon: Cloud },
   { id: 'o3', name: 'Ozone', description: 'Ground-level ozone', icon: Activity },
-  { id: 'no2', name: 'Nitrogen dioxide', description: 'NOâ‚‚', icon: Activity },
-  { id: 'so2', name: 'Sulphur dioxide', description: 'SOâ‚‚', icon: Activity },
+  { id: 'no2', name: 'Nitrogen dioxide', description: 'NOÃ¢â€šâ€š', icon: Activity },
+  { id: 'so2', name: 'Sulphur dioxide', description: 'SOÃ¢â€šâ€š', icon: Activity },
   { id: 'co', name: 'Carbon monoxide', description: 'CO', icon: Activity },
   { id: 'no', name: 'Nitric oxide', description: 'NO', icon: Activity },
   { id: 'nox', name: 'Nitrogen oxides', description: 'NOx', icon: Activity }
@@ -181,7 +181,7 @@ function MetricCard({ reading, name, description, icon: Icon }) {
       </div>
 
       <div className="location-measure">
-        <b>{reading ? reading.value : 'â€”'}</b>
+        <b>{reading ? reading.value : 'Ã¢â‚¬â€'}</b>
         <span>{reading?.unit || 'No data'}</span>
       </div>
     </article>
@@ -216,16 +216,33 @@ function App() {
         body: JSON.stringify({ email: subscriberEmail })
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data = {};
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error('The server returned an invalid response.');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Subscription failed.');
+        const message =
+          typeof data.error === 'string'
+            ? data.error
+            : typeof data.message === 'string'
+              ? data.message
+              : JSON.stringify(data.error || data);
+
+        throw new Error(message || `Subscription failed (${response.status}).`);
       }
 
       setSubscribeStatus(data.message || 'Please check your inbox to confirm your subscription.');
       setSubscriberEmail('');
     } catch (err) {
-      setSubscribeStatus(err.message || 'Unable to subscribe. Please try again.');
+      setSubscribeStatus(
+        err instanceof Error ? err.message : 'Unable to subscribe. Please try again.'
+      );
     } finally {
       setSubscribeLoading(false);
     }
@@ -478,7 +495,7 @@ function App() {
         <section className="intro-row">
           <div>
             <div className="eyebrow">
-              AIR QUALITY Â· LIVE MONITORING
+              AIR QUALITY Ã‚Â· LIVE MONITORING
             </div>
 
             <h1>
@@ -586,14 +603,14 @@ function App() {
                 <div className="source-type">
                   <Radio size={15} />
                   {stationData?.provider || 'CPCB'}
-                  <span>Â·</span>
+                  <span>Ã‚Â·</span>
                   {stationData?.source || 'OpenAQ'}
                 </div>
 
                 <div className="reading-main">
                   <span>PM2.5</span>
                   <b>
-                    {pm25 ? pm25.value : 'â€”'}
+                    {pm25 ? pm25.value : 'Ã¢â‚¬â€'}
                     <small> {pm25?.unit || 'No data'}</small>
                   </b>
                 </div>
@@ -602,7 +619,7 @@ function App() {
                   <div>
                     <span>PM10</span>
                     <b>
-                      {pm10 ? pm10.value : 'â€”'}
+                      {pm10 ? pm10.value : 'Ã¢â‚¬â€'}
                       <small> {pm10?.unit || ''}</small>
                     </b>
                   </div>
@@ -728,8 +745,8 @@ function App() {
         </section>
 
         <footer className="page-footer">
-          <span>AIRMESH Â· MANGALURU AIR MONITORING</span>
-          <span>REAL SENSOR DATA Â· CPCB VIA OPENAQ</span>
+          <span>AIRMESH Ã‚Â· MANGALURU AIR MONITORING</span>
+          <span>REAL SENSOR DATA Ã‚Â· CPCB VIA OPENAQ</span>
         </footer>
       </div>
     );
