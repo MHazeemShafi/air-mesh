@@ -18,30 +18,38 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [latestResponse, sensorsResponse] = await Promise.all([
+    const [latestResponse, locationResponse] = await Promise.all([
       fetch(
         "https://api.openaq.org/v3/locations/44513/latest?limit=1000",
         { headers }
       ),
       fetch(
-        "https://api.openaq.org/v3/locations/44513/sensors?limit=1000",
+        "https://api.openaq.org/v3/locations/44513",
         { headers }
       ),
     ]);
 
-    if (!latestResponse.ok || !sensorsResponse.ok) {
+    if (!latestResponse.ok || !locationResponse.ok) {
       return res.status(502).json({
-        error: "Unable to retrieve station data",
+        error: "Unable to retrieve OpenAQ data",
         latestStatus: latestResponse.status,
-        sensorsStatus: sensorsResponse.status,
+        locationStatus: locationResponse.status,
       });
     }
 
     const latestData = await latestResponse.json();
-    const sensorsData = await sensorsResponse.json();
+    const locationData = await locationResponse.json();
+
+    const location = locationData.results?.[0];
+
+    if (!location) {
+      return res.status(502).json({
+        error: "Station details were not found",
+      });
+    }
 
     const sensorMap = new Map(
-      (sensorsData.results ?? []).map((sensor) => [
+      (location.sensors ?? []).map((sensor) => [
         sensor.id,
         {
           parameter: sensor.parameter?.name?.toLowerCase(),
@@ -50,28 +58,26 @@ export default async function handler(req, res) {
       ])
     );
 
-    const readings = (latestData.results ?? [])
-      .map((item) => {
-        const sensor = sensorMap.get(item.sensorsId);
+    const readings = (latestData.results ?? []).map((item) => {
+      const sensor = sensorMap.get(item.sensorsId);
 
-        return {
-          parameter: sensor?.parameter ?? "unknown",
-          value: item.value,
-          unit: sensor?.unit ?? null,
-          time: item.datetime?.utc ?? null,
-          sensorId: item.sensorsId,
-        };
-      })
-      .filter((item) => item.parameter !== "unknown");
+      return {
+        parameter: sensor?.parameter ?? "unknown",
+        value: item.value,
+        unit: sensor?.unit ?? null,
+        time: item.datetime?.utc ?? null,
+        sensorId: item.sensorsId,
+      };
+    });
 
     return res.status(200).json({
-      station: "Kadri, Mangalore - KSPCB",
-      provider: "CPCB via OpenAQ",
+      station: location.name ?? "Kadri, Mangalore - KSPCB",
+      provider: location.provider?.name ?? "Unknown",
       source: "OpenAQ",
       fetchedAt: new Date().toISOString(),
       readings,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       error: "Failed to contact OpenAQ",
     });
