@@ -10,6 +10,7 @@ import {
   Droplets,
   Gauge,
   MapPin,
+  Mail,
   RefreshCw,
   ShieldCheck,
   Wind,
@@ -35,8 +36,8 @@ const POLLUTANTS = [
   { id: 'pm25', name: 'PM2.5', description: 'Fine particulate matter', icon: Cloud },
   { id: 'pm10', name: 'PM10', description: 'Coarse particulate matter', icon: Cloud },
   { id: 'o3', name: 'Ozone', description: 'Ground-level ozone', icon: Activity },
-  { id: 'no2', name: 'Nitrogen dioxide', description: 'NO₂', icon: Activity },
-  { id: 'so2', name: 'Sulphur dioxide', description: 'SO₂', icon: Activity },
+  { id: 'no2', name: 'Nitrogen dioxide', description: 'NOâ‚‚', icon: Activity },
+  { id: 'so2', name: 'Sulphur dioxide', description: 'SOâ‚‚', icon: Activity },
   { id: 'co', name: 'Carbon monoxide', description: 'CO', icon: Activity },
   { id: 'no', name: 'Nitric oxide', description: 'NO', icon: Activity },
   { id: 'nox', name: 'Nitrogen oxides', description: 'NOx', icon: Activity }
@@ -180,7 +181,7 @@ function MetricCard({ reading, name, description, icon: Icon }) {
       </div>
 
       <div className="location-measure">
-        <b>{reading ? reading.value : '—'}</b>
+        <b>{reading ? reading.value : 'â€”'}</b>
         <span>{reading?.unit || 'No data'}</span>
       </div>
     </article>
@@ -194,8 +195,41 @@ function App() {
   const [lastFetch, setLastFetch] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('Overview');
+  const [subscriberEmail, setSubscriberEmail] = useState('');
+  const [subscribeStatus, setSubscribeStatus] = useState('');
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
 
   const requestRef = useRef(false);
+
+  const handleSubscribe = async (event) => {
+    event.preventDefault();
+    setSubscribeStatus('');
+    setSubscribeLoading(true);
+
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({ email: subscriberEmail })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Subscription failed.');
+      }
+
+      setSubscribeStatus(data.message || 'Please check your inbox to confirm your subscription.');
+      setSubscriberEmail('');
+    } catch (err) {
+      setSubscribeStatus(err.message || 'Unable to subscribe. Please try again.');
+    } finally {
+      setSubscribeLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     if (requestRef.current) return;
@@ -281,10 +315,72 @@ function App() {
   const navItems = [
     { name: 'Overview', icon: Gauge },
     { name: 'Pollutants', icon: Activity },
-    { name: 'Station', icon: MapPin }
+    { name: 'Station', icon: MapPin },
+    { name: 'Email Alerts', icon: Mail }
   ];
 
   const renderContent = () => {
+    if (activeTab === 'Email Alerts') {
+      return (
+        <div className="page-content">
+          <section className="page-title">
+            <div className="eyebrow">AIR QUALITY NOTIFICATIONS</div>
+            <h1>Email Alerts</h1>
+            <p>
+              Receive email notifications about air-quality changes
+              at the Kadri monitoring station in Mangaluru.
+            </p>
+          </section>
+
+          <div className="selected-panel">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">EMAIL NOTIFICATIONS</div>
+                <h2>Stay informed about local air quality</h2>
+              </div>
+              <Mail size={24} />
+            </div>
+
+            <p>
+              Enter your email address. We will send a confirmation link.
+              Your subscription becomes active after you confirm your email.
+            </p>
+
+            <form onSubmit={handleSubscribe} style={{ maxWidth: '520px' }}>
+              <label htmlFor="subscriber-email">Email address</label>
+              <input
+                id="subscriber-email"
+                type="email"
+                value={subscriberEmail}
+                onChange={(event) => setSubscriberEmail(event.target.value)}
+                placeholder="you@example.com"
+                required
+                disabled={subscribeLoading}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '13px',
+                  marginTop: '9px',
+                  marginBottom: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc'
+                }}
+              />
+
+              <button type="submit" disabled={subscribeLoading}>
+                {subscribeLoading ? 'Sending...' : 'Subscribe'}
+              </button>
+            </form>
+
+            {subscribeStatus && (
+              <p role="status">{subscribeStatus}</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'Pollutants') {
       return (
         <div className="page-content">
@@ -382,7 +478,7 @@ function App() {
         <section className="intro-row">
           <div>
             <div className="eyebrow">
-              AIR QUALITY · LIVE MONITORING
+              AIR QUALITY Â· LIVE MONITORING
             </div>
 
             <h1>
@@ -490,14 +586,14 @@ function App() {
                 <div className="source-type">
                   <Radio size={15} />
                   {stationData?.provider || 'CPCB'}
-                  <span>·</span>
+                  <span>Â·</span>
                   {stationData?.source || 'OpenAQ'}
                 </div>
 
                 <div className="reading-main">
                   <span>PM2.5</span>
                   <b>
-                    {pm25 ? pm25.value : '—'}
+                    {pm25 ? pm25.value : 'â€”'}
                     <small> {pm25?.unit || 'No data'}</small>
                   </b>
                 </div>
@@ -506,7 +602,7 @@ function App() {
                   <div>
                     <span>PM10</span>
                     <b>
-                      {pm10 ? pm10.value : '—'}
+                      {pm10 ? pm10.value : 'â€”'}
                       <small> {pm10?.unit || ''}</small>
                     </b>
                   </div>
@@ -632,8 +728,8 @@ function App() {
         </section>
 
         <footer className="page-footer">
-          <span>AIRMESH · MANGALURU AIR MONITORING</span>
-          <span>REAL SENSOR DATA · CPCB VIA OPENAQ</span>
+          <span>AIRMESH Â· MANGALURU AIR MONITORING</span>
+          <span>REAL SENSOR DATA Â· CPCB VIA OPENAQ</span>
         </footer>
       </div>
     );
