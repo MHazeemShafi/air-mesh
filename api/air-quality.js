@@ -1,7 +1,9 @@
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   const apiKey = process.env.OPENAQ_API_KEY;
@@ -16,6 +18,10 @@ export default async function handler(req, res) {
     "X-API-Key": apiKey,
     Accept: "application/json",
   };
+
+  // Reading freshness settings
+  const MAX_AGE_HOURS = 24;
+  const FUTURE_TOLERANCE_MINUTES = 5;
 
   try {
     const [latestResponse, locationResponse] = await Promise.all([
@@ -37,8 +43,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const latestData = await latestResponse.json();
-    const locationData = await locationResponse.json();
+    const [latestData, locationData] = await Promise.all([
+      latestResponse.json(),
+      locationResponse.json(),
+    ]);
 
     const location = locationData.results?.[0];
 
@@ -48,36 +56,109 @@ export default async function handler(req, res) {
       });
     }
 
+    // Map sensor IDs to their actual parameters and units.
     const sensorMap = new Map(
       (location.sensors ?? []).map((sensor) => [
         sensor.id,
         {
-          parameter: sensor.parameter?.name?.toLowerCase(),
+          parameter: sensor.parameter?.name?.toLowerCase() ?? "unknown",
           unit: sensor.parameter?.units ?? null,
         },
       ])
     );
 
-    const readings = (latestData.results ?? []).map((item) => {
+    const now = Date.now();
+    const maxAgeMs = MAX_AGE_HOURS * 60 * 60 * 1000;
+    const futureToleranceMs =
+      FUTURE_TOLERANCE_MINUTES * 60 * 1000;
+
+    const readings = [];
+    const staleReadings = [];
+    const invalidReadings = [];
+
+    for (const item of latestData.results ?? []) {
       const sensor = sensorMap.get(item.sensorsId);
 
-      return {
+      const reading = {
         parameter: sensor?.parameter ?? "unknown",
         value: item.value,
         unit: sensor?.unit ?? null,
         time: item.datetime?.utc ?? null,
         sensorId: item.sensorsId,
       };
-    });
+
+      // Reject missing or invalid values.
+      if (
+        typeof item.value !== "number" ||
+        !Number.isFinite(item.value) ||
+        item.value < 0
+      ) {
+        invalidReadings.push({
+          ...reading,
+          reason: "Invalid or negative sensor value",
+        });
+        continue;
+      }
+
+      // Reject missing or invalid timestamps.
+      const timestamp = Date.parse(reading.time);
+
+      if (!Number.isFinite(timestamp)) {
+        invalidReadings.push({
+          ...reading,
+          reason: "Missing or invalid timestamp",
+        });
+        continue;
+      }
+
+      // Reject readings dated too far into the future.
+      if (timestamp > now + futureToleranceMs) {
+        invalidReadings.push({
+          ...reading,
+          reason: "Future timestamp",
+        });
+        continue;
+      }
+
+      // Keep old measurements separate from current readings.
+      if (now - timestamp > maxAgeMs) {
+        staleReadings.push({
+          ...reading,
+          reason: "Reading older than 24 hours",
+        });
+        continue;
+      }
+
+      readings.push(reading);
+    }
+
+    // Newest measurements first.
+    readings.sort(
+      (a, b) => Date.parse(b.time) - Date.parse(a.time)
+    );
 
     return res.status(200).json({
       station: location.name ?? "Kadri, Mangalore - KSPCB",
       provider: location.provider?.name ?? "Unknown",
       source: "OpenAQ",
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: new Date(now).toISOString(),
+
+      dataStatus: readings.length > 0 ? "available" : "unavailable",
+
+      freshness: {
+        maximumAgeHours: MAX_AGE_HOURS,
+        currentReadings: readings.length,
+        staleReadings: staleReadings.length,
+        invalidReadings: invalidReadings.length,
+      },
+
       readings,
+      staleReadings,
+      invalidReadings,
     });
-  } catch {
+  } catch (error) {
+    console.error("Air quality API error:", error);
+
     return res.status(500).json({
       error: "Failed to contact OpenAQ",
     });
