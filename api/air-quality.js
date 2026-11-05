@@ -44,7 +44,7 @@ export default async function handler(req, res) {
       }))
       .filter(
         (item) =>
-          ["pm25", "pm2.5", "pm10"].includes(item.parameter) &&
+          ["pm25", "pm2.5", "pm10", "co"].includes(item.parameter) &&
           typeof item.value === "number"
       );
 
@@ -61,4 +61,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
