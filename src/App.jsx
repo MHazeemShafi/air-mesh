@@ -1,6 +1,8 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import GradientWave from "./components/GradientWave";
+﻿
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import GradientWave from './components/GradientWave';
 import L from 'leaflet';
+
 import {
   Activity, AlertCircle, AlertTriangle, ArrowUpRight,
   CheckCircle2, ChevronDown, Clock, Cloud, Database,
@@ -75,7 +77,10 @@ function formatTime(value) {
   if (!value) return 'Unavailable';
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Unavailable';
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Unavailable';
+  }
 
   return date.toLocaleString('en-IN', {
     day: '2-digit',
@@ -96,7 +101,10 @@ function getAge(timestamp) {
   if (!timestamp) return null;
 
   const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return null;
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
 
   return Math.max(
     0,
@@ -121,7 +129,6 @@ async function readJsonResponse(response) {
   }
 }
 
-// Safely extract messages from API responses.
 function getApiMessage(value, fallback) {
   if (typeof value === 'string' && value.trim()) {
     return value;
@@ -154,57 +161,107 @@ function Accordion({ title, subtitle, children, defaultOpen = false }) {
           <strong>{title}</strong>
           {subtitle && <small>{subtitle}</small>}
         </span>
-        <ChevronDown className={open ? 'rotated' : ''} size={18} />
+
+        <ChevronDown
+          className={open ? 'rotated' : ''}
+          size={18}
+        />
       </button>
 
-      {open && <div className="accordion-content">{children}</div>}
+      {open && (
+        <div className="accordion-content">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
+
+/* MAP COMPONENT */
 
 function MapView() {
   const element = useRef(null);
   const mapRef = useRef(null);
 
   useEffect(() => {
-    if (!element.current || mapRef.current) return;
+    const container = element.current;
 
-    const map = L.map(element.current, {
-      scrollWheelZoom: false
-    }).setView([STATION.lat, STATION.lng], 14);
+    if (!container || mapRef.current) {
+      return;
+    }
 
-    mapRef.current = map;
+    let map;
 
-    L.tileLayer(
-      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
+    try {
+      map = L.map(container, {
+        scrollWheelZoom: false,
+        zoomControl: true,
+        preferCanvas: true
+      }).setView(
+        [STATION.lat, STATION.lng],
+        14
+      );
+
+      mapRef.current = map;
+
+      L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }
+      ).addTo(map);
+
+      const marker = L.marker([
+        STATION.lat,
+        STATION.lng
+      ]).addTo(map);
+
+      marker.bindPopup(`
+        <strong>${STATION.name}</strong><br/>
+        CPCB monitoring station<br/>
+        Data source: OpenAQ
+      `);
+
+      const resizeMap = () => {
+        if (map && mapRef.current === map) {
+          map.invalidateSize({
+            animate: false,
+            pan: false
+          });
+        }
+      };
+
+      const observer = new ResizeObserver(resizeMap);
+
+      observer.observe(container);
+
+      map.whenReady(() => {
+        requestAnimationFrame(() => {
+          resizeMap();
+        });
+      });
+
+      return () => {
+        observer.disconnect();
+
+        if (map) {
+          map.remove();
+        }
+
+        if (mapRef.current === map) {
+          mapRef.current = null;
+        }
+      };
+    } catch (error) {
+      console.error('AirMesh map initialization failed:', error);
+
+      if (map) {
+        map.remove();
       }
-    ).addTo(map);
 
-    const marker = L.marker([
-      STATION.lat,
-      STATION.lng
-    ]).addTo(map);
-
-    marker.bindPopup(`
-      <strong>${STATION.name}</strong><br/>
-      CPCB monitoring station<br/>
-      Data source: OpenAQ
-    `);
-
-    const observer = new ResizeObserver(() => {
-      map.invalidateSize();
-    });
-
-    observer.observe(element.current);
-
-    return () => {
-      observer.disconnect();
-      map.remove();
       mapRef.current = null;
-    };
+    }
   }, []);
 
   return (
@@ -215,6 +272,8 @@ function MapView() {
     />
   );
 }
+
+/* MAIN APPLICATION */
 
 function App() {
   const [stationData, setStationData] = useState(null);
@@ -239,7 +298,6 @@ function App() {
   const [settingsRequestStatus, setSettingsRequestStatus] = useState('');
   const [settingsRequestLoading, setSettingsRequestLoading] = useState(false);
 
-  // Accept both versions of the settings-link parameter.
   const [manageToken, setManageToken] = useState(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -283,6 +341,8 @@ function App() {
   const sensorAge = getAge(latestReading?.time);
   const freshness = getFreshness(sensorAge);
 
+  /* API DATA */
+
   const fetchData = async () => {
     if (requestRef.current) return;
 
@@ -292,7 +352,9 @@ function App() {
     try {
       const response = await fetch(API_URL, {
         method: 'GET',
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json'
+        },
         cache: 'no-store'
       });
 
@@ -322,11 +384,16 @@ function App() {
   useEffect(() => {
     fetchData();
 
-    const timer = setInterval(fetchData, REFRESH_INTERVAL);
+    const timer = setInterval(
+      fetchData,
+      REFRESH_INTERVAL
+    );
+
     return () => clearInterval(timer);
   }, []);
 
-  // Load saved preferences from a secure emailed link.
+  /* LOAD SAVED EMAIL SETTINGS */
+
   useEffect(() => {
     if (!manageToken) return;
 
@@ -343,7 +410,9 @@ function App() {
           `/api/manage-alert-settings?token=${encodeURIComponent(manageToken)}`,
           {
             method: 'GET',
-            headers: { Accept: 'application/json' },
+            headers: {
+              Accept: 'application/json'
+            },
             cache: 'no-store'
           }
         );
@@ -352,7 +421,10 @@ function App() {
 
         if (!response.ok) {
           throw new Error(
-            getApiMessage(data.error, 'Unable to load your settings.')
+            getApiMessage(
+              data.error,
+              'Unable to load your settings.'
+            )
           );
         }
 
@@ -362,7 +434,9 @@ function App() {
         setAlertsEnabled(data.enabled === true);
 
         const validPollutants = Array.isArray(data.pollutants)
-          ? data.pollutants.filter(id => Object.hasOwn(POLLUTANT_UNITS, id))
+          ? data.pollutants.filter(id =>
+              Object.hasOwn(POLLUTANT_UNITS, id)
+            )
           : ['pm25'];
 
         setSelectedPollutants(validPollutants);
@@ -378,13 +452,20 @@ function App() {
         }
 
         setThresholds(nextThresholds);
-        setManageStatus('Your current notification settings have loaded.');
+
+        setManageStatus(
+          'Your current notification settings have loaded.'
+        );
       } catch (err) {
         if (!cancelled) {
-          setManageError(err.message || 'Unable to load settings.');
+          setManageError(
+            err.message || 'Unable to load settings.'
+          );
         }
       } finally {
-        if (!cancelled) setManageLoading(false);
+        if (!cancelled) {
+          setManageLoading(false);
+        }
       }
     };
 
@@ -395,8 +476,14 @@ function App() {
     };
   }, [manageToken]);
 
+  /* EMAIL PREFERENCES */
+
   const buildPreferences = () => {
     const cleanThresholds = {};
+
+    if (selectedPollutants.length === 0) {
+      throw new Error('Select at least one pollutant.');
+    }
 
     for (const id of selectedPollutants) {
       const value = Number(thresholds[id]);
@@ -417,10 +504,6 @@ function App() {
       };
     }
 
-    if (selectedPollutants.length === 0) {
-      throw new Error('Select at least one pollutant.');
-    }
-
     return {
       profile,
       enabled: alertsEnabled,
@@ -432,6 +515,7 @@ function App() {
 
   const handleSubscribe = async event => {
     event.preventDefault();
+
     setSubscribeStatus('');
     setSubscribeLoading(true);
 
@@ -471,15 +555,17 @@ function App() {
 
       setEmail('');
     } catch (err) {
-      setSubscribeStatus(err.message || 'Unable to subscribe.');
+      setSubscribeStatus(
+        err.message || 'Unable to subscribe.'
+      );
     } finally {
       setSubscribeLoading(false);
     }
   };
 
-  // Request a secure settings link for an existing subscriber.
   const handleRequestSettings = async event => {
     event.preventDefault();
+
     setSettingsRequestStatus('');
     setSettingsRequestLoading(true);
 
@@ -525,6 +611,7 @@ function App() {
 
   const handleSaveSettings = async event => {
     event.preventDefault();
+
     setManageStatus('');
     setManageError('');
     setManageSaving(true);
@@ -548,15 +635,23 @@ function App() {
 
       if (!response.ok) {
         throw new Error(
-          getApiMessage(data.error, 'Unable to save your preferences.')
+          getApiMessage(
+            data.error,
+            'Unable to save your preferences.'
+          )
         );
       }
 
       setManageStatus(
-        getApiMessage(data.message, 'Your notification settings have been saved.')
+        getApiMessage(
+          data.message,
+          'Your notification settings have been saved.'
+        )
       );
     } catch (err) {
-      setManageError(err.message || 'Unable to save settings.');
+      setManageError(
+        err.message || 'Unable to save settings.'
+      );
     } finally {
       setManageSaving(false);
     }
@@ -568,6 +663,7 @@ function App() {
     setManageError('');
 
     const url = new URL(window.location.href);
+
     url.searchParams.delete('manageAlerts');
     url.searchParams.delete('alert-settings');
 
@@ -594,6 +690,8 @@ function App() {
     });
   };
 
+  /* READING GRID */
+
   const renderPollutantGrid = items => (
     <div className="pollutant-grid">
       {items.map(item => {
@@ -602,20 +700,30 @@ function App() {
 
         return (
           <article className="pollutant-item" key={item.id}>
-            <span className="pollutant-icon"><Icon size={18} /></span>
+            <span className="pollutant-icon">
+              <Icon size={18} />
+            </span>
+
             <div className="pollutant-copy">
               <strong>{item.name}</strong>
               <small>{item.description}</small>
             </div>
+
             <div className="pollutant-value">
-              <strong>{reading ? reading.value : '—'}</strong>
-              <small>{reading?.unit || 'No data'}</small>
+              <strong>
+                {reading ? reading.value : '—'}
+              </strong>
+              <small>
+                {reading?.unit || 'No data'}
+              </small>
             </div>
           </article>
         );
       })}
     </div>
   );
+
+  /* OVERVIEW PAGE */
 
   const renderOverview = () => (
     <div className="page-content">
@@ -627,6 +735,7 @@ function App() {
             <span className="live-dot" />
             LOCAL ENVIRONMENTAL MONITORING
           </span>
+
           <span className="hero-location">
             <MapPin size={14} />
             {STATION.city}, {STATION.state}
@@ -638,12 +747,21 @@ function App() {
             <span className="hero-overline">
               A CLEARER VIEW OF THE AIR AROUND YOU
             </span>
-            <h1>Breathe with<br /><span>awareness.</span></h1>
+
+            <h1>
+              Breathe with<br />
+              <span>awareness.</span>
+            </h1>
+
             <p>
               Understand local air measurements, explore environmental
               conditions, and make more informed everyday decisions.
             </p>
-            <button className="hero-link" onClick={() => changeTab('Pollutants')}>
+
+            <button
+              className="hero-link"
+              onClick={() => changeTab('Pollutants')}
+            >
               Explore measurements <ArrowUpRight size={16} />
             </button>
           </div>
@@ -653,19 +771,24 @@ function App() {
               <span className="reading-indicator" />
               LATEST PM2.5 MEASUREMENT
             </div>
+
             <div className="hero-reading-number">
               {pm25 ? pm25.value : '--'}
               <span>{pm25?.unit || 'µg/m³'}</span>
             </div>
+
             <div className="reading-meta">
               <span>Reported measurement</span>
               <span className={`freshness-label ${freshness.toLowerCase().replace(' ', '-')}`}>
                 {freshness}
               </span>
             </div>
+
             <div className="reading-timestamp">
               <Clock size={13} />
-              {pm25 ? formatTime(pm25.time) : 'Waiting for readings'}
+              {pm25
+                ? formatTime(pm25.time)
+                : 'Waiting for readings'}
             </div>
           </div>
         </div>
@@ -675,6 +798,7 @@ function App() {
             <Radio size={14} />
             {stationData?.provider || 'CPCB'} / {stationData?.source || 'OpenAQ'}
           </span>
+
           <span>
             {latestReading
               ? `Latest sensor reading: ${formatTime(latestReading.time)}`
@@ -685,25 +809,47 @@ function App() {
 
       <section className="quick-stats">
         <div className="quick-stat">
-          <span className="stat-icon"><MapPin size={17} /></span>
-          <div><small>MONITORING STATIONS</small><strong>01</strong></div>
+          <span className="stat-icon">
+            <MapPin size={17} />
+          </span>
+          <div>
+            <small>MONITORING STATIONS</small>
+            <strong>01</strong>
+          </div>
         </div>
+
         <div className="quick-stat">
-          <span className="stat-icon"><Activity size={17} /></span>
-          <div><small>CURRENT READINGS</small><strong>{currentCount}</strong></div>
+          <span className="stat-icon">
+            <Activity size={17} />
+          </span>
+          <div>
+            <small>CURRENT READINGS</small>
+            <strong>{currentCount}</strong>
+          </div>
         </div>
+
         <div className="quick-stat">
-          <span className="stat-icon"><Clock size={17} /></span>
+          <span className="stat-icon">
+            <Clock size={17} />
+          </span>
           <div>
             <small>LAST SENSOR UPDATE</small>
             <strong className="stat-time">
-              {latestReading ? formatTime(latestReading.time) : 'Unavailable'}
+              {latestReading
+                ? formatTime(latestReading.time)
+                : 'Unavailable'}
             </strong>
           </div>
         </div>
+
         <div className="quick-stat">
-          <span className="stat-icon"><Database size={17} /></span>
-          <div><small>DATA PROVIDER</small><strong>CPCB / OpenAQ</strong></div>
+          <span className="stat-icon">
+            <Database size={17} />
+          </span>
+          <div>
+            <small>DATA PROVIDER</small>
+            <strong>CPCB / OpenAQ</strong>
+          </div>
         </div>
       </section>
 
@@ -714,8 +860,16 @@ function App() {
             <h2>What is the air reporting?</h2>
             <p>{STATION.name}</p>
           </div>
-          <button className="outline-button" onClick={fetchData} disabled={refreshing}>
-            <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
+
+          <button
+            className="outline-button"
+            onClick={fetchData}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              size={14}
+              className={refreshing ? 'spin' : ''}
+            />
             {refreshing ? 'Updating' : 'Refresh data'}
           </button>
         </div>
@@ -733,7 +887,9 @@ function App() {
             <div>
               <strong>Unable to retrieve sensor data</strong>
               <p>{error}</p>
-              <button className="text-button" onClick={fetchData}>Try again</button>
+              <button className="text-button" onClick={fetchData}>
+                Try again
+              </button>
             </div>
           </div>
         )}
@@ -753,15 +909,24 @@ function App() {
                   <span className="eyebrow">FINE PARTICULATE MATTER</span>
                   <h3>PM2.5 concentration</h3>
                 </div>
-                <span className="measurement-icon"><Cloud size={24} /></span>
+
+                <span className="measurement-icon">
+                  <Cloud size={24} />
+                </span>
               </div>
+
               <div className="measurement-number">
                 <strong>{pm25 ? pm25.value : '--'}</strong>
                 <span>{pm25?.unit || 'µg/m³'}</span>
               </div>
+
               <div className="measurement-bottom">
                 <span>Sensor-reported value</span>
-                <span>{pm25 ? formatTime(pm25.time) : 'No PM2.5 reading'}</span>
+                <span>
+                  {pm25
+                    ? formatTime(pm25.time)
+                    : 'No PM2.5 reading'}
+                </span>
               </div>
             </div>
 
@@ -774,11 +939,17 @@ function App() {
               </p>
             </div>
 
-            <Accordion title="Other pollutant measurements" subtitle="Expand to explore the available readings">
+            <Accordion
+              title="Other pollutant measurements"
+              subtitle="Expand to explore the available readings"
+            >
               {renderPollutantGrid(POLLUTANTS)}
             </Accordion>
 
-            <Accordion title="Weather and environmental conditions" subtitle="Temperature, humidity and wind measurements">
+            <Accordion
+              title="Weather and environmental conditions"
+              subtitle="Temperature, humidity and wind measurements"
+            >
               {renderPollutantGrid(WEATHER)}
             </Accordion>
           </>
@@ -792,17 +963,30 @@ function App() {
             <h2>Where is this data coming from?</h2>
             <p>Explore the reporting station's location.</p>
           </div>
+
           <span className="small-tag">01 STATION</span>
         </div>
 
         <div className="map-panel">
           <div className="map-heading">
-            <div><strong>{STATION.name}</strong><small>{STATION.city}, {STATION.state}</small></div>
-            <span className="map-status"><span className="live-dot" /> MONITORING LOCATION</span>
+            <div>
+              <strong>{STATION.name}</strong>
+              <small>{STATION.city}, {STATION.state}</small>
+            </div>
+
+            <span className="map-status">
+              <span className="live-dot" />
+              MONITORING LOCATION
+            </span>
           </div>
+
           <MapView />
+
           <div className="map-footer">
-            <span><MapPin size={13} /> {STATION.lat}, {STATION.lng}</span>
+            <span>
+              <MapPin size={13} />
+              {STATION.lat}, {STATION.lng}
+            </span>
             <span>Map data © OpenStreetMap</span>
           </div>
         </div>
@@ -817,31 +1001,60 @@ function App() {
           </div>
         </div>
 
-        <Accordion title="Data quality and timestamps" subtitle="View current, stale and invalid reading counts">
+        <Accordion
+          title="Data quality and timestamps"
+          subtitle="View current, stale and invalid reading counts"
+        >
           <div className="quality-grid">
             <div><small>CURRENT</small><strong>{currentCount}</strong></div>
             <div><small>STALE</small><strong>{staleCount}</strong></div>
             <div><small>INVALID</small><strong>{invalidCount}</strong></div>
             <div><small>MAXIMUM AGE</small><strong>24h</strong></div>
           </div>
+
           <div className="metadata-list">
-            <div><span>API fetched</span><strong>{formatTime(stationData?.fetchedAt)}</strong></div>
-            <div><span>Latest measurement</span><strong>{formatTime(latestReading?.time)}</strong></div>
-            <div><span>Last browser fetch</span><strong>{formatTime(lastFetch)}</strong></div>
-            <div><span>Provider</span><strong>{stationData?.provider || 'Unavailable'}</strong></div>
-            <div><span>Source</span><strong>{stationData?.source || 'Unavailable'}</strong></div>
+            <div>
+              <span>API fetched</span>
+              <strong>{formatTime(stationData?.fetchedAt)}</strong>
+            </div>
+            <div>
+              <span>Latest measurement</span>
+              <strong>{formatTime(latestReading?.time)}</strong>
+            </div>
+            <div>
+              <span>Last browser fetch</span>
+              <strong>{formatTime(lastFetch)}</strong>
+            </div>
+            <div>
+              <span>Provider</span>
+              <strong>{stationData?.provider || 'Unavailable'}</strong>
+            </div>
+            <div>
+              <span>Source</span>
+              <strong>{stationData?.source || 'Unavailable'}</strong>
+            </div>
           </div>
         </Accordion>
       </section>
 
       <section className="cta-panel">
-        <div className="cta-icon"><HeartPulse size={23} /></div>
+        <div className="cta-icon">
+          <HeartPulse size={23} />
+        </div>
+
         <div>
           <span className="eyebrow">PERSONAL AWARENESS</span>
           <h2>Make environmental information easier to follow.</h2>
-          <p>Explore general guidance and learn how to stay informed about local monitoring measurements.</p>
+          <p>
+            Explore general guidance and learn how to stay informed
+            about local monitoring measurements.
+          </p>
         </div>
-        <button className="solid-button" onClick={() => changeTab('Health guidance')}>
+
+        <button
+          className="solid-button"
+          onClick={() => changeTab('Health guidance')}
+        >
           Health guidance <ArrowUpRight size={16} />
         </button>
       </section>
@@ -852,6 +1065,8 @@ function App() {
       </footer>
     </div>
   );
+
+  /* POLLUTANTS PAGE */
 
   const renderPollutants = () => (
     <div className="page-content">
@@ -870,10 +1085,13 @@ function App() {
           <strong>{currentCount}</strong>
           <small>Current readings</small>
         </div>
+
         <div>
           <span className="eyebrow">LAST SENSOR UPDATE</span>
           <strong className="summary-time">
-            {latestReading ? formatTime(latestReading.time) : 'Unavailable'}
+            {latestReading
+              ? formatTime(latestReading.time)
+              : 'Unavailable'}
           </strong>
           <small>{freshness}</small>
         </div>
@@ -881,76 +1099,144 @@ function App() {
 
       <section className="section-block">
         <div className="section-heading">
-          <div><span className="eyebrow">01 / AIR POLLUTANTS</span><h2>Pollutant measurements</h2><p>Explore the available pollutant readings.</p></div>
+          <div>
+            <span className="eyebrow">01 / AIR POLLUTANTS</span>
+            <h2>Pollutant measurements</h2>
+            <p>Explore the available pollutant readings.</p>
+          </div>
         </div>
+
         {renderPollutantGrid(POLLUTANTS)}
       </section>
 
       <section className="section-block">
         <div className="section-heading">
-          <div><span className="eyebrow">02 / ENVIRONMENT</span><h2>Weather measurements</h2><p>Additional environmental readings from the station.</p></div>
+          <div>
+            <span className="eyebrow">02 / ENVIRONMENT</span>
+            <h2>Weather measurements</h2>
+            <p>Additional environmental readings from the station.</p>
+          </div>
         </div>
+
         {renderPollutantGrid(WEATHER)}
       </section>
 
       <div className="info-note">
         <Info size={18} />
         <p>
-          Missing readings are not treated as zero. Measurements use the
-          units supplied by OpenAQ. This page does not calculate an official CPCB AQI.
+          Missing readings are not treated as zero. Measurements use
+          the units supplied by OpenAQ. This page does not calculate
+          an official CPCB AQI.
         </p>
       </div>
     </div>
   );
+
+  /* STATION PAGE */
 
   const renderStation = () => (
     <div className="page-content">
       <section className="page-title">
         <span className="eyebrow">MONITORING NETWORK</span>
         <h1>One station. Real measurements.</h1>
-        <p>Information about the real-world monitoring location currently connected to AirMesh.</p>
+        <p>
+          Information about the real-world monitoring location
+          currently connected to AirMesh.
+        </p>
       </section>
 
       <div className="station-detail-card">
         <div className="station-card-heading">
-          <span className="station-symbol"><MapPin size={23} /></span>
+          <span className="station-symbol">
+            <MapPin size={23} />
+          </span>
           <span className="eyebrow">REGISTERED MONITORING LOCATION</span>
         </div>
+
         <h2>{stationData?.station || STATION.name}</h2>
         <p>{STATION.city}, {STATION.state}, India</p>
 
         <div className="quality-grid">
-          <div><small>PROVIDER</small><strong>{stationData?.provider || 'CPCB'}</strong></div>
-          <div><small>DATA SOURCE</small><strong>{stationData?.source || 'OpenAQ'}</strong></div>
-          <div><small>CURRENT</small><strong>{currentCount}</strong></div>
-          <div><small>STALE</small><strong>{staleCount}</strong></div>
+          <div>
+            <small>PROVIDER</small>
+            <strong>{stationData?.provider || 'CPCB'}</strong>
+          </div>
+          <div>
+            <small>DATA SOURCE</small>
+            <strong>{stationData?.source || 'OpenAQ'}</strong>
+          </div>
+          <div>
+            <small>CURRENT</small>
+            <strong>{currentCount}</strong>
+          </div>
+          <div>
+            <small>STALE</small>
+            <strong>{staleCount}</strong>
+          </div>
         </div>
 
         <Accordion title="Technical station information">
           <div className="metadata-list">
-            <div><span>Invalid readings</span><strong>{invalidCount}</strong></div>
-            <div><span>Maximum reading age</span><strong>{stationData?.freshness?.maximumAgeHours ?? 24} hours</strong></div>
-            <div><span>Coordinates</span><strong>{STATION.lat}, {STATION.lng}</strong></div>
-            <div><span>Latest sensor reading</span><strong>{formatTime(latestReading?.time)}</strong></div>
-            <div><span>API fetched</span><strong>{formatTime(stationData?.fetchedAt)}</strong></div>
+            <div>
+              <span>Invalid readings</span>
+              <strong>{invalidCount}</strong>
+            </div>
+            <div>
+              <span>Maximum reading age</span>
+              <strong>{stationData?.freshness?.maximumAgeHours ?? 24} hours</strong>
+            </div>
+            <div>
+              <span>Coordinates</span>
+              <strong>{STATION.lat}, {STATION.lng}</strong>
+            </div>
+            <div>
+              <span>Latest sensor reading</span>
+              <strong>{formatTime(latestReading?.time)}</strong>
+            </div>
+            <div>
+              <span>API fetched</span>
+              <strong>{formatTime(stationData?.fetchedAt)}</strong>
+            </div>
           </div>
         </Accordion>
       </div>
 
       <section className="section-block">
         <div className="section-heading">
-          <div><span className="eyebrow">LOCATION</span><h2>Kadri, Mangaluru</h2><p>Geographic location of the reporting station.</p></div>
+          <div>
+            <span className="eyebrow">LOCATION</span>
+            <h2>Kadri, Mangaluru</h2>
+            <p>Geographic location of the reporting station.</p>
+          </div>
         </div>
+
         <div className="map-panel">
+          <div className="map-heading">
+            <div>
+              <strong>{STATION.name}</strong>
+              <small>{STATION.city}, {STATION.state}</small>
+            </div>
+            <span className="map-status">
+              <span className="live-dot" />
+              MONITORING LOCATION
+            </span>
+          </div>
+
           <MapView />
+
           <div className="map-footer">
-            <span><MapPin size={13} /> {STATION.lat}, {STATION.lng}</span>
+            <span>
+              <MapPin size={13} />
+              {STATION.lat}, {STATION.lng}
+            </span>
             <span>Map data © OpenStreetMap</span>
           </div>
         </div>
       </section>
     </div>
   );
+
+  /* HEALTH GUIDANCE PAGE */
 
   const renderGuidance = () => (
     <div className="page-content">
@@ -964,7 +1250,10 @@ function App() {
       </section>
 
       <div className="guidance-intro">
-        <div className="guidance-intro-icon"><Leaf size={25} /></div>
+        <div className="guidance-intro-icon">
+          <Leaf size={25} />
+        </div>
+
         <div>
           <span className="eyebrow">A MORE INFORMED APPROACH</span>
           <h2>Air quality can affect people differently.</h2>
@@ -978,38 +1267,105 @@ function App() {
 
       <section className="section-block">
         <div className="section-heading">
-          <div><span className="eyebrow">01 / UNDERSTANDING PM2.5</span><h2>Why fine particles matter</h2><p>Learn what this measurement represents.</p></div>
+          <div>
+            <span className="eyebrow">01 / UNDERSTANDING PM2.5</span>
+            <h2>Why fine particles matter</h2>
+            <p>Learn what this measurement represents.</p>
+          </div>
         </div>
 
         <div className="guidance-grid">
           <article className="guidance-card">
-            <span className="guidance-card-icon"><Cloud size={20} /></span>
+            <span className="guidance-card-icon">
+              <Cloud size={20} />
+            </span>
             <h3>Fine particles</h3>
-            <p>PM2.5 refers to airborne particles with a diameter of 2.5 micrometres or smaller. These particles can travel deep into the respiratory system.</p>
+            <p>
+              PM2.5 refers to airborne particles with a diameter
+              of 2.5 micrometres or smaller. These particles can
+              travel deep into the respiratory system.
+            </p>
           </article>
+
           <article className="guidance-card">
-            <span className="guidance-card-icon"><HeartPulse size={20} /></span>
+            <span className="guidance-card-icon">
+              <HeartPulse size={20} />
+            </span>
             <h3>Individual sensitivity</h3>
-            <p>Some people may be more sensitive to pollution. Personal health needs and medical advice should guide individual decisions.</p>
+            <p>
+              Some people may be more sensitive to pollution.
+              Personal health needs and medical advice should
+              guide individual decisions.
+            </p>
           </article>
+
           <article className="guidance-card">
-            <span className="guidance-card-icon"><Clock size={20} /></span>
+            <span className="guidance-card-icon">
+              <Clock size={20} />
+            </span>
             <h3>Check measurement time</h3>
-            <p>Always consider when a measurement was recorded. A delayed reading may not represent current outdoor conditions.</p>
+            <p>
+              Always consider when a measurement was recorded.
+              A delayed reading may not represent current
+              outdoor conditions.
+            </p>
           </article>
         </div>
       </section>
 
       <section className="section-block">
         <div className="section-heading">
-          <div><span className="eyebrow">02 / PRACTICAL AWARENESS</span><h2>Things worth checking</h2><p>Useful considerations when reviewing local readings.</p></div>
+          <div>
+            <span className="eyebrow">02 / PRACTICAL AWARENESS</span>
+            <h2>Things worth checking</h2>
+            <p>Useful considerations when reviewing local readings.</p>
+          </div>
         </div>
 
         <div className="guidance-list">
-          <div><span>01</span><section><strong>Check the timestamp</strong><p>Look at the sensor measurement time, not just when the website refreshed.</p></section></div>
-          <div><span>02</span><section><strong>Look beyond one pollutant</strong><p>Different pollutants have different sources and health considerations.</p></section></div>
-          <div><span>03</span><section><strong>Consider your surroundings</strong><p>Traffic, construction, weather and indoor sources can affect exposure.</p></section></div>
-          <div><span>04</span><section><strong>Follow professional advice</strong><p>People with existing health conditions should follow guidance from their healthcare professional.</p></section></div>
+          <div>
+            <span>01</span>
+            <section>
+              <strong>Check the timestamp</strong>
+              <p>
+                Look at the sensor measurement time, not just
+                when the website refreshed.
+              </p>
+            </section>
+          </div>
+
+          <div>
+            <span>02</span>
+            <section>
+              <strong>Look beyond one pollutant</strong>
+              <p>
+                Different pollutants have different sources
+                and health considerations.
+              </p>
+            </section>
+          </div>
+
+          <div>
+            <span>03</span>
+            <section>
+              <strong>Consider your surroundings</strong>
+              <p>
+                Traffic, construction, weather and indoor
+                sources can affect exposure.
+              </p>
+            </section>
+          </div>
+
+          <div>
+            <span>04</span>
+            <section>
+              <strong>Follow professional advice</strong>
+              <p>
+                People with existing health conditions should
+                follow guidance from their healthcare professional.
+              </p>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -1025,19 +1381,25 @@ function App() {
     </div>
   );
 
+  /* EMAIL ALERT THRESHOLDS */
+
   const renderThresholdFields = () => (
     <div className="alert-threshold-list">
       {POLLUTANTS.map(item => {
         const selected = selectedPollutants.includes(item.id);
 
         return (
-          <div className={`alert-threshold-row ${selected ? 'selected' : ''}`} key={item.id}>
+          <div
+            className={`alert-threshold-row ${selected ? 'selected' : ''}`}
+            key={item.id}
+          >
             <label className="alert-pollutant-choice">
               <input
                 type="checkbox"
                 checked={selected}
                 onChange={() => togglePollutant(item.id)}
               />
+
               <span>
                 <strong>{item.name}</strong>
                 <small>{item.description}</small>
@@ -1058,6 +1420,7 @@ function App() {
                 placeholder="Threshold"
                 aria-label={`${item.name} threshold`}
               />
+
               <span>{POLLUTANT_UNITS[item.id]}</span>
             </div>
           </div>
@@ -1065,6 +1428,8 @@ function App() {
       })}
     </div>
   );
+
+  /* EMAIL PROFILE CONTROLS */
 
   const renderProfileControls = () => (
     <>
@@ -1077,10 +1442,16 @@ function App() {
             checked={profile === 'respiratory_sensitive'}
             onChange={() => setProfile('respiratory_sensitive')}
           />
-          <span className="alert-profile-icon"><HeartPulse size={19} /></span>
+
+          <span className="alert-profile-icon">
+            <HeartPulse size={19} />
+          </span>
+
           <span>
             <strong>Respiratory-sensitive</strong>
-            <small>Starts with PM2.5 at 15 µg/m³. You can change this threshold.</small>
+            <small>
+              Starts with PM2.5 at 15 µg/m³. You can change this threshold.
+            </small>
           </span>
         </label>
 
@@ -1092,10 +1463,16 @@ function App() {
             checked={profile === 'general'}
             onChange={() => setProfile('general')}
           />
-          <span className="alert-profile-icon"><Bell size={19} /></span>
+
+          <span className="alert-profile-icon">
+            <Bell size={19} />
+          </span>
+
           <span>
             <strong>General updates</strong>
-            <small>Choose the pollutant measurements you want to follow.</small>
+            <small>
+              Choose the pollutant measurements you want to follow.
+            </small>
           </span>
         </label>
 
@@ -1107,10 +1484,16 @@ function App() {
             checked={profile === 'custom'}
             onChange={() => setProfile('custom')}
           />
-          <span className="alert-profile-icon"><Settings size={19} /></span>
+
+          <span className="alert-profile-icon">
+            <Settings size={19} />
+          </span>
+
           <span>
             <strong>Custom profile</strong>
-            <small>Set your own pollutant selection and thresholds.</small>
+            <small>
+              Set your own pollutant selection and thresholds.
+            </small>
           </span>
         </label>
       </div>
@@ -1120,6 +1503,7 @@ function App() {
           <strong>Enable daily notifications</strong>
           <small>Turn this off to pause your email alerts.</small>
         </div>
+
         <label className="alert-switch">
           <input
             type="checkbox"
@@ -1133,7 +1517,9 @@ function App() {
       <div className="alert-threshold-heading">
         <div>
           <strong>Pollutant thresholds</strong>
-          <small>Receive an email when a selected fresh reading is above your limit.</small>
+          <small>
+            Receive an email when a selected fresh reading is above your limit.
+          </small>
         </div>
       </div>
 
@@ -1150,6 +1536,8 @@ function App() {
     </>
   );
 
+  /* EMAIL ALERTS PAGE */
+
   const renderEmail = () => (
     <div className="page-content">
       <section className="page-title">
@@ -1164,11 +1552,16 @@ function App() {
       {manageToken ? (
         <div className="alert-manage-panel">
           <div className="alert-panel-heading">
-            <span className="alert-panel-icon"><Settings size={22} /></span>
+            <span className="alert-panel-icon">
+              <Settings size={22} />
+            </span>
+
             <div>
               <span className="eyebrow">SECURE SETTINGS LINK</span>
               <h2>Manage your notifications.</h2>
-              <p>Update your profile, thresholds or notification status.</p>
+              <p>
+                Update your profile, thresholds or notification status.
+              </p>
             </div>
           </div>
 
@@ -1177,39 +1570,66 @@ function App() {
               <RefreshCw size={18} className="spin" />
               Loading your saved preferences...
             </div>
-          ) : manageError ? (
+          ) : manageError && !manageStatus ? (
             <div className="notice-card error-card">
               <AlertCircle size={18} />
               <div>
                 <strong>Settings link unavailable</strong>
                 <p>{manageError}</p>
-                <button className="text-button" onClick={closeManageSettings}>
+                <button
+                  className="text-button"
+                  onClick={closeManageSettings}
+                >
                   Return to email alerts
                 </button>
               </div>
             </div>
           ) : (
-            <form className="alert-settings-form" onSubmit={handleSaveSettings}>
+            <form
+              className="alert-settings-form"
+              onSubmit={handleSaveSettings}
+            >
               {renderProfileControls()}
 
-              <button className="solid-button alert-save-button" type="submit" disabled={manageSaving}>
-                {manageSaving ? 'Saving...' : 'Save notification settings'}
+              <button
+                className="solid-button alert-save-button"
+                type="submit"
+                disabled={manageSaving || manageLoading}
+              >
+                {manageSaving
+                  ? 'Saving...'
+                  : 'Save notification settings'}
                 <Save size={16} />
               </button>
 
-              {manageStatus && <p className="form-message success-message" role="status">{manageStatus}</p>}
-              {manageError && <p className="form-message error-message" role="alert">{manageError}</p>}
+              {manageStatus && (
+                <p className="form-message success-message" role="status">
+                  {manageStatus}
+                </p>
+              )}
+
+              {manageError && (
+                <p className="form-message error-message" role="alert">
+                  {manageError}
+                </p>
+              )}
             </form>
           )}
 
-          <button className="alert-secondary-button" onClick={closeManageSettings}>
+          <button
+            className="alert-secondary-button"
+            onClick={closeManageSettings}
+          >
             Close settings
           </button>
         </div>
       ) : (
         <>
           <div className="alert-frequency-banner">
-            <span className="alert-frequency-icon"><Clock size={20} /></span>
+            <span className="alert-frequency-icon">
+              <Clock size={20} />
+            </span>
+
             <div>
               <strong>One scheduled check each day</strong>
               <p>
@@ -1221,9 +1641,16 @@ function App() {
 
           <div className="email-layout">
             <div className="email-intro">
-              <div className="cta-icon"><Mail size={24} /></div>
-              <span className="eyebrow">PERSONAL AIR QUALITY UPDATES</span>
+              <div className="cta-icon">
+                <Mail size={24} />
+              </div>
+
+              <span className="eyebrow">
+                PERSONAL AIR QUALITY UPDATES
+              </span>
+
               <h2>Choose what matters to you.</h2>
+
               <p>
                 Select a notification profile and the pollutant measurements
                 you want to follow. Your email must be verified before alerts
@@ -1234,24 +1661,35 @@ function App() {
                 <CheckCircle2 size={17} />
                 Email verification before activation
               </div>
+
               <div className="email-benefit">
                 <ShieldCheck size={17} />
                 Secure link for changing preferences
               </div>
+
               <div className="email-benefit">
                 <Clock size={17} />
                 Daily scheduled threshold checks
               </div>
+
               <div className="email-benefit">
                 <Info size={17} />
                 No medical diagnosis or symptom prediction
               </div>
             </div>
 
-            <form className="email-form alert-subscribe-form" onSubmit={handleSubscribe}>
-              <span className="eyebrow">CREATE YOUR SUBSCRIPTION</span>
+            <form
+              className="email-form alert-subscribe-form"
+              onSubmit={handleSubscribe}
+            >
+              <span className="eyebrow">
+                CREATE YOUR SUBSCRIPTION
+              </span>
 
-              <label htmlFor="subscriber-email">Email address</label>
+              <label htmlFor="subscriber-email">
+                Email address
+              </label>
+
               <input
                 id="subscriber-email"
                 type="email"
@@ -1263,17 +1701,28 @@ function App() {
               />
 
               <div className="alert-form-divider" />
-              <span className="eyebrow">YOUR NOTIFICATION PREFERENCES</span>
+
+              <span className="eyebrow">
+                YOUR NOTIFICATION PREFERENCES
+              </span>
 
               {renderProfileControls()}
 
-              <button className="solid-button alert-save-button" type="submit" disabled={subscribeLoading}>
-                {subscribeLoading ? 'Sending confirmation...' : 'Subscribe and verify'}
+              <button
+                className="solid-button alert-save-button"
+                type="submit"
+                disabled={subscribeLoading}
+              >
+                {subscribeLoading
+                  ? 'Sending confirmation...'
+                  : 'Subscribe and verify'}
                 <ArrowUpRight size={16} />
               </button>
 
               {subscribeStatus && (
-                <p className="form-message" role="status">{subscribeStatus}</p>
+                <p className="form-message" role="status">
+                  {subscribeStatus}
+                </p>
               )}
 
               <small>
@@ -1293,8 +1742,14 @@ function App() {
               </p>
             </div>
 
-            <form className="alert-settings-request" onSubmit={handleRequestSettings}>
-              <label htmlFor="settings-email">Subscribed email address</label>
+            <form
+              className="alert-settings-request"
+              onSubmit={handleRequestSettings}
+            >
+              <label htmlFor="settings-email">
+                Subscribed email address
+              </label>
+
               <div className="alert-request-controls">
                 <input
                   id="settings-email"
@@ -1305,13 +1760,23 @@ function App() {
                   required
                   disabled={settingsRequestLoading}
                 />
-                <button className="outline-button" type="submit" disabled={settingsRequestLoading}>
-                  {settingsRequestLoading ? 'Sending...' : 'Send settings link'}
+
+                <button
+                  className="outline-button"
+                  type="submit"
+                  disabled={settingsRequestLoading}
+                >
+                  {settingsRequestLoading
+                    ? 'Sending...'
+                    : 'Send settings link'}
                   <ArrowUpRight size={15} />
                 </button>
               </div>
+
               {settingsRequestStatus && (
-                <p className="form-message" role="status">{settingsRequestStatus}</p>
+                <p className="form-message" role="status">
+                  {settingsRequestStatus}
+                </p>
               )}
             </form>
           </section>
@@ -1334,132 +1799,188 @@ function App() {
     </div>
   );
 
+  /* PAGE ROUTING */
+
   const renderContent = () => {
-    if (activeTab === 'Pollutants') return renderPollutants();
-    if (activeTab === 'Station') return renderStation();
-    if (activeTab === 'Health guidance') return renderGuidance();
-    if (activeTab === 'Email alerts') return renderEmail();
+    if (activeTab === 'Pollutants') {
+      return renderPollutants();
+    }
+
+    if (activeTab === 'Station') {
+      return renderStation();
+    }
+
+    if (activeTab === 'Health guidance') {
+      return renderGuidance();
+    }
+
+    if (activeTab === 'Email alerts') {
+      return renderEmail();
+    }
+
     return renderOverview();
   };
+
+  /* APPLICATION LAYOUT */
 
   return (
     <>
       <GradientWave />
 
-      <div className="app-shell">
-        {sidebarOpen && (
-          <button
-            className="mobile-scrim"
-            aria-label="Close navigation"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+      <div className="airmesh-content">
+        <div className="app-shell">
 
-        <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`}>
-        <div className="brand-row">
-          <div className="brand-symbol"><span /><span /><span /></div>
-          <div className="brand-name">AirMesh<span>.</span></div>
-          <button className="mobile-close" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="brand-caption">ENVIRONMENTAL INTELLIGENCE</div>
-        <div className="side-divider" />
-        <div className="side-label">YOUR LOCATION</div>
-
-        <div className="workspace-chip">
-          <span className="workspace-dot" />
-          <span>Mangaluru, Karnataka</span>
-        </div>
-
-        <div className="side-label nav-heading">NAVIGATION</div>
-
-        <nav className="side-nav">
-          {NAV_ITEMS.map(({ name, icon: Icon }) => (
+          {sidebarOpen && (
             <button
-              key={name}
-              className={`nav-link ${activeTab === name ? 'active' : ''}`}
-              onClick={() => changeTab(name)}
-            >
-              <Icon size={17} />
-              <span>{name}</span>
-            </button>
-          ))}
-        </nav>
+              className="mobile-scrim"
+              aria-label="Close navigation"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
 
-        <div className="sidebar-bottom">
-          <div className="demo-state">
-            <span className={`demo-dot ${status === 'available' ? 'connected' : ''}`} />
-            <div>
-              <b>
-                {status === 'available'
-                  ? 'Data available'
-                  : status === 'loading'
-                    ? 'Connecting...'
-                    : 'Data unavailable'}
-              </b>
-              <small>CPCB via OpenAQ</small>
+          <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`}>
+            <div className="brand-row">
+              <div className="brand-symbol">
+                <span />
+                <span />
+                <span />
+              </div>
+
+              <div className="brand-name">
+                AirMesh<span>.</span>
+              </div>
+
+              <button
+                className="mobile-close"
+                onClick={() => setSidebarOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
             </div>
-          </div>
 
-          <div className="side-foot">
-            AIR QUALITY IS LOCAL.
-            <br />
-            KNOW YOUR ENVIRONMENT.
-          </div>
+            <div className="brand-caption">
+              ENVIRONMENTAL INTELLIGENCE
+            </div>
+
+            <div className="side-divider" />
+
+            <div className="side-label">YOUR LOCATION</div>
+
+            <div className="workspace-chip">
+              <span className="workspace-dot" />
+              <span>Mangaluru, Karnataka</span>
+            </div>
+
+            <div className="side-label nav-heading">
+              NAVIGATION
+            </div>
+
+            <nav className="side-nav">
+              {NAV_ITEMS.map(({ name, icon: Icon }) => (
+                <button
+                  key={name}
+                  className={`nav-link ${activeTab === name ? 'active' : ''}`}
+                  onClick={() => changeTab(name)}
+                >
+                  <Icon size={17} />
+                  <span>{name}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="sidebar-bottom">
+              <div className="demo-state">
+                <span
+                  className={`demo-dot ${status === 'available' ? 'connected' : ''}`}
+                />
+
+                <div>
+                  <b>
+                    {status === 'available'
+                      ? 'Data available'
+                      : status === 'loading'
+                        ? 'Connecting...'
+                        : 'Data unavailable'}
+                  </b>
+
+                  <small>CPCB via OpenAQ</small>
+                </div>
+              </div>
+
+              <div className="side-foot">
+                AIR QUALITY IS LOCAL.
+                <br />
+                KNOW YOUR ENVIRONMENT.
+              </div>
+            </div>
+          </aside>
+
+          <main className="main-area">
+            <header className="topbar">
+              <div className="topbar-left">
+                <button
+                  className="mobile-menu"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open navigation"
+                >
+                  <Menu size={19} />
+                </button>
+
+                <div className="breadcrumb">
+                  <span>AirMesh</span>
+                  <b>/</b>
+                  {activeTab}
+                </div>
+              </div>
+
+              <div className="topbar-actions">
+                <span className={`connection-status ${status}`}>
+                  <span />
+                  {status === 'available'
+                    ? 'DATA AVAILABLE'
+                    : status.toUpperCase()}
+                </span>
+
+                <button
+                  className="icon-action"
+                  onClick={fetchData}
+                  disabled={refreshing}
+                  title="Refresh sensor data"
+                  aria-label="Refresh sensor data"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={refreshing ? 'spin' : ''}
+                  />
+                </button>
+              </div>
+            </header>
+
+            {renderContent()}
+          </main>
+
+          <nav className="mobile-bottom-nav">
+            {NAV_ITEMS.map(({ name, icon: Icon }) => (
+              <button
+                key={name}
+                className={activeTab === name ? 'active' : ''}
+                onClick={() => changeTab(name)}
+              >
+                <Icon size={18} />
+
+                <span>
+                  {name === 'Health guidance'
+                    ? 'Health'
+                    : name === 'Email alerts'
+                      ? 'Alerts'
+                      : name}
+                </span>
+              </button>
+            ))}
+          </nav>
+
         </div>
-      </aside>
-
-      <main className="main-area">
-        <header className="topbar">
-          <div className="topbar-left">
-            <button className="mobile-menu" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
-              <Menu size={19} />
-            </button>
-            <div className="breadcrumb">
-              <span>AirMesh</span><b>/</b>{activeTab}
-            </div>
-          </div>
-
-          <div className="topbar-actions">
-            <span className={`connection-status ${status}`}>
-              <span />
-              {status === 'available' ? 'DATA AVAILABLE' : status.toUpperCase()}
-            </span>
-            <button
-              className="icon-action"
-              onClick={fetchData}
-              disabled={refreshing}
-              title="Refresh sensor data"
-              aria-label="Refresh sensor data"
-            >
-              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
-            </button>
-          </div>
-        </header>
-
-        {renderContent()}
-      </main>
-
-      <nav className="mobile-bottom-nav">
-        {NAV_ITEMS.map(({ name, icon: Icon }) => (
-          <button
-            key={name}
-            className={activeTab === name ? 'active' : ''}
-            onClick={() => changeTab(name)}
-          >
-            <Icon size={18} />
-            <span>
-              {name === 'Health guidance'
-                ? 'Health'
-                : name === 'Email alerts'
-                  ? 'Alerts'
-                  : name}
-            </span>
-          </button>
-        ))}
-        </nav>
       </div>
     </>
   );
