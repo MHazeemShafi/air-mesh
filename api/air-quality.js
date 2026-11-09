@@ -19,23 +19,28 @@ export default async function handler(req, res) {
     Accept: "application/json",
   };
 
-  // Reading freshness settings
+  const LOCATION_ID = 44513;
   const MAX_AGE_HOURS = 24;
   const FUTURE_TOLERANCE_MINUTES = 5;
 
   try {
     const [latestResponse, locationResponse] = await Promise.all([
       fetch(
-        "https://api.openaq.org/v3/locations/44513/latest?limit=1000",
+        `https://api.openaq.org/v3/locations/${LOCATION_ID}/latest?limit=1000`,
         { headers }
       ),
       fetch(
-        "https://api.openaq.org/v3/locations/44513",
+        `https://api.openaq.org/v3/locations/${LOCATION_ID}`,
         { headers }
       ),
     ]);
 
     if (!latestResponse.ok || !locationResponse.ok) {
+      console.error("OpenAQ response error:", {
+        latestStatus: latestResponse.status,
+        locationStatus: locationResponse.status,
+      });
+
       return res.status(502).json({
         error: "Unable to retrieve OpenAQ data",
         latestStatus: latestResponse.status,
@@ -61,7 +66,8 @@ export default async function handler(req, res) {
       (location.sensors ?? []).map((sensor) => [
         sensor.id,
         {
-          parameter: sensor.parameter?.name?.toLowerCase() ?? "unknown",
+          parameter:
+            sensor.parameter?.name?.toLowerCase() ?? "unknown",
           unit: sensor.parameter?.units ?? null,
         },
       ])
@@ -120,7 +126,7 @@ export default async function handler(req, res) {
         continue;
       }
 
-      // Keep old measurements separate from current readings.
+      // Separate old measurements from current readings.
       if (now - timestamp > maxAgeMs) {
         staleReadings.push({
           ...reading,
@@ -143,7 +149,8 @@ export default async function handler(req, res) {
       source: "OpenAQ",
       fetchedAt: new Date(now).toISOString(),
 
-      dataStatus: readings.length > 0 ? "available" : "unavailable",
+      dataStatus:
+        readings.length > 0 ? "available" : "unavailable",
 
       freshness: {
         maximumAgeHours: MAX_AGE_HOURS,
