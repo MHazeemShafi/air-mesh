@@ -1,96 +1,55 @@
 AirMesh
 
-Urban Air Quality Monitoring & Alert Platform
+Smart Air Quality Monitoring Platform
 
-AirMesh is a web-based air quality monitoring platform that brings environmental data into a clear, interactive dashboard. It monitors reported air quality measurements from the Kadri CPCB/KSPCB monitoring station in Mangaluru, Karnataka, helping users understand pollutant levels and changing environmental conditions.
+AirMesh is a web-based air quality monitoring platform designed to make environmental information more accessible, understandable and useful. It brings air quality readings, interactive geographical visualization and environmental insights together in a single interface.
 
-Using OpenAQ as its data source, AirMesh presents pollutant measurements, weather information, monitoring station details, and historical visualizations in one place.
-
-The platform also includes an email subscription system designed to support configurable air quality alerts.
-
----
+The platform helps users explore pollution levels, understand individual pollutants and stay informed about changing air quality conditions.
 
 Features
 
-- Live Air Quality Data — Retrieves reported monitoring measurements through the OpenAQ API.
-- Multiple Pollutants — Displays PM2.5, PM10, O₃, NO₂, SO₂, CO, NO, and NOx.
-- Weather Monitoring — Presents temperature, humidity, wind speed, and wind direction.
-- Interactive Station Map — Displays the monitoring station using Leaflet and OpenStreetMap.
-- Data Validation — Separates current, stale, and invalid measurements to improve data transparency.
-- Automatic Refresh — Refreshes air quality data every five minutes.
-- Data Visualization — Presents environmental measurements through interactive charts.
-- Email Subscriptions — Supports email registration and verification.
-- Configurable Alert Preferences — Supports pollutant selection, notification profiles, and threshold preferences.
-- Responsive Interface — Designed for desktop and mobile screens.
-
-Monitoring Location
-
-Kadri CPCB/KSPCB Monitoring Station
-
-Mangaluru, Karnataka, India
-
-Coordinates: "12.889, 74.842"
-
-AirMesh retrieves measurements associated with this monitoring location through OpenAQ.
+- Air Quality Monitoring – Access air quality information and pollutant readings.
+- Interactive Map – Explore geographical air quality information through an interactive map.
+- Pollutant Analysis – View individual pollutant measurements, including PM2.5, PM10, O₃ and NO₂.
+- AQI Visualization – Understand air quality conditions through visual indicators and charts.
+- Environmental Insights – Access information that helps interpret pollution levels and environmental conditions.
+- Subscription System – Subscribe to receive air quality updates.
+- Responsive Interface – Designed to work across desktop and mobile devices.
+- Data Visualization – Present environmental information through clear, accessible visual elements.
 
 Technology Stack
 
 Technology| Purpose
-React| Frontend interface
-JavaScript| Application logic
+React| Frontend development
+TypeScript| Type-safe application development
 Vite| Development and build tooling
-Supabase| Subscription data storage
-OpenAQ API| Air quality measurements
-Leaflet| Interactive mapping
-OpenStreetMap| Map tiles
-Recharts| Data visualization
-Lucide React| Interface icons
-Resend| Email verification
-Vercel| Deployment and serverless API
+Tailwind CSS| Interface styling
+Leaflet| Interactive geographical maps
+Supabase| Backend and database services
+Vercel| Application deployment
 
-Architecture
+Air Quality Parameters
 
-AirMesh uses a React frontend supported by serverless API endpoints.
+AirMesh supports the presentation of important air pollution indicators, including:
 
-```text
-OpenAQ API
-|
-v
-Vercel API Endpoint
-/api/air-quality
-|
-v
-React App
-|
-+----------+----------+
-|          |          |
-v          v          v
-Air Data    Charts     Station Map
-|
-v
-Dashboard
+- PM2.5 – Fine particulate matter
+- PM10 – Coarse particulate matter
+- O₃ – Ground-level ozone
+- NO₂ – Nitrogen dioxide
 
-   Email Subscription
-           |
-           v
-    /api/subscribe
-           |
-   +-------+-------+
-   |               |
-   v               v
-Supabase          Resend
-   |               |
-   v               v
+These measurements help users understand different aspects of ambient air quality.
 
-Preferences       Verification
-|               |
-+-------+-------+
-|
-v
-Verified Subscriber
-```
+System Architecture
 
-Getting Started
+AirMesh follows a web-based architecture consisting of:
+
+1. Frontend: A React-based interface for displaying air quality information and interactive visualizations.
+2. API Layer: Serverless API endpoints for retrieving and processing application data.
+3. Data Layer: External air quality information and backend services.
+4. Database Services: Supabase integration for supported application functionality.
+5. Deployment: Vercel hosting for application delivery.
+
+Installation
 
 Prerequisites
 
@@ -98,104 +57,42 @@ Prerequisites
 - npm
 - Git
 
-Installation
+Setup
 
-Clone the repository:
+Clone the repository and navigate to the project directory:
 
-```bash
-git clone https://github.com/MHazeemShafi/air-mesh.git
-```
-
-Navigate into the project:
-
-```bash
-cd air-mesh
-```
+git clone https://github.com/MHazeemShafi/AirMesh.git
+cd AirMesh
 
 Install dependencies:
 
-```bash
 npm install
-```
+
+Configure the required environment variables in a ".env.local" file according to the application's configuration.
 
 Start the development server:
 
-```bash
 npm run dev
-```
 
-Open the local URL provided by Vite.
+Create a production build:
 
-Production Build
-
-To generate a production build:
-
-```bash
 npm run build
-```
 
-Environment Variables
+Project Objective
 
-The backend requires the following environment variables:
+AirMesh aims to improve access to environmental information by combining air quality monitoring, geographical visualization and accessible data presentation.
 
-Variable| Purpose
-"OPENAQ_API_KEY"| OpenAQ API authentication
-"SUPABASE_URL"| Supabase project URL
-"SUPABASE_SERVICE_ROLE_KEY"| Server-side Supabase access
-"RESEND_API_KEY"| Resend email authentication
-"RESEND_FROM_EMAIL"| Sender email address
-"APP_URL"| Deployed application URL
+The project focuses on making air pollution information easier to explore and understand while encouraging greater environmental awareness.
 
-Keep secret environment variables on the server. Never expose the Supabase service role key or API secrets in frontend code.
+Future Scope
 
-Backend API
-
-Endpoint| Method| Description
-"/api/air-quality"| GET| Retrieves and validates air quality measurements
-"/api/subscribe"| POST| Registers an email subscription and sends a verification email
-"/api/verify-subscription"| GET| Verifies a subscriber's email address
-
-The subscription system uses Supabase tables for subscriber records and alert preferences.
-
-Email verification links expire after 24 hours.
-
-Data Quality
-
-AirMesh does not treat every returned measurement as current.
-
-The backend checks measurements for:
-
-- Missing or invalid numerical values.
-- Negative readings.
-- Missing or invalid timestamps.
-- Measurements dated too far into the future.
-- Measurements older than 24 hours.
-
-Measurements are categorized into:
-
-- Current readings
-- Stale readings
-- Invalid readings
-
-This helps distinguish unavailable or outdated measurements from usable data.
-
-Important Notes
-
-- AirMesh displays reported pollutant measurements; it does not independently measure pollution.
-- Official AQI calculations are not currently implemented.
-- Data availability depends on the monitoring station and OpenAQ.
-- The station map displays the monitoring location, not a live pollution heatmap.
-- Email subscriptions require successful email verification.
-- Automated alert delivery depends on the configured scheduled alert-processing backend.
-
-AirMesh is an independent monitoring and visualization project, not an official government air quality reporting service.
+- Expanded geographical monitoring coverage.
+- Additional environmental parameters.
+- Advanced historical data analysis.
+- More detailed pollution trend visualization.
+- Improved notification and alert capabilities.
+- Enhanced environmental insights.
 
 ---
 
-Project
-
-GitHub: https://github.com/MHazeemShafi/air-mesh
-
-Developer: MHazeemShafi
-
-Built to make environmental data easier to access, understand, and monitor.
+AirMesh — Making Air Quality Information More Accessible.
