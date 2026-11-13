@@ -182,36 +182,93 @@ export default async function handler(req, res) {
 
     await sendBrevoEmail({
       to: email,
-      subject: 'Confirm your AirMesh email alerts',
+      subject: 'Verify your email address | AirMesh',
       htmlContent: `
-        <div style="
-          font-family:Arial,sans-serif;
-          max-width:560px;
-          margin:auto;
-          color:#17231b;
-          line-height:1.6
-        ">
-          <h2>Confirm your AirMesh subscription</h2>
-          <p>
-            Confirm your email address to activate
-            the notification preferences you selected.
-          </p>
-          <p>
-            <a href="${verificationUrl}" style="
-              display:inline-block;
-              background:#245d3c;
-              color:white;
-              padding:12px 18px;
-              border-radius:6px;
-              text-decoration:none
-            ">Verify email</a>
-          </p>
-          <p>
-            This link expires in 24 hours.
-            Ignore this email if you did not request it.
-          </p>
-        </div>
-      `
+        <!doctype html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="color-scheme" content="light">
+            <title>Verify your AirMesh email</title>
+          </head>
+          <body style="margin:0;padding:0;background:#eef4f7;font-family:Arial,Helvetica,sans-serif;color:#172b3a;">
+            <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+              One quick step to activate your AirMesh air-quality alerts.
+            </div>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#eef4f7;padding:32px 12px;">
+              <tr>
+                <td align="center">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#ffffff;border-radius:18px;overflow:hidden;">
+                    <tr>
+                      <td style="padding:28px 34px;background:#102d46;">
+                        <div style="font-size:12px;letter-spacing:3px;font-weight:700;color:#9bd7e8;">A I R M E S H</div>
+                        <div style="margin-top:7px;font-size:13px;color:#d4e6ef;">Breathe with awareness.</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:38px 34px 24px;">
+                        <div style="display:inline-block;padding:7px 11px;border-radius:20px;background:#e8f5f8;color:#17617a;font-size:11px;font-weight:700;letter-spacing:1px;">
+                          EMAIL VERIFICATION
+                        </div>
+                        <h1 style="margin:20px 0 12px;font-size:27px;line-height:1.25;color:#102d46;">
+                          One small step before you breathe easier.
+                        </h1>
+                        <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#526574;">
+                          You asked AirMesh to send you air-quality notifications. Confirm that this email address belongs to you to activate your selected alert preferences.
+                        </p>
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:26px 0;">
+                          <tr>
+                            <td align="center" bgcolor="#147b9b" style="border-radius:8px;">
+                              <a href="${verificationUrl}" target="_blank" style="display:inline-block;padding:15px 25px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">
+                                Verify my email address
+                              </a>
+                            </td>
+                          </tr>
+                        </table>
+                        <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#687b89;">
+                          Button not working? Copy this link into your browser:
+                        </p>
+                        <p style="margin:0 0 26px;word-break:break-all;font-size:12px;line-height:1.6;">
+                          <a href="${verificationUrl}" style="color:#147b9b;">${verificationUrl}</a>
+                        </p>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f1f7f9;border-left:3px solid #58a9c0;border-radius:6px;">
+                          <tr>
+                            <td style="padding:15px 17px;">
+                              <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#17394d;">A quick security note</p>
+                              <p style="margin:0;font-size:12px;line-height:1.6;color:#607482;">
+                                This verification link expires in 24 hours and can only be used to confirm this subscription. If you did not request AirMesh alerts, you can safely ignore this message.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:22px 34px;background:#f7fafb;border-top:1px solid #e6eef1;">
+                        <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#29495b;">A I R M E S H</p>
+                        <p style="margin:0;font-size:11px;line-height:1.6;color:#81919b;">
+                          Air-quality information for more informed everyday decisions.<br>
+                          This is an automated email. Please do not reply.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:18px 0 0;font-size:10px;color:#91a0a8;">© AirMesh</p>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+      textContent: `AIR MESH — Breathe with awareness.
+
+Verify your email address to activate your AirMesh air-quality alerts.
+
+Open this link:
+${verificationUrl}
+
+This link expires in 24 hours. If you did not request AirMesh alerts, ignore this email.`
     });
 
     return res.status(200).json({
