@@ -1,14 +1,13 @@
 
 import { timingSafeEqual } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const MAX_READING_AGE_MS = 24 * 60 * 60 * 1000;
 const FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
@@ -99,7 +98,7 @@ function getCurrentReadings(payload) {
 
     const value = Number(reading.value);
     const unit = reading.unit;
-    const timestamp = Date.parse(reading.timestamp);
+    const timestamp = Date.parse(reading.time);
 
     if (
       !Number.isFinite(value) ||
@@ -270,12 +269,11 @@ export default async function handler(req, res) {
 
   try {
     const appUrl = process.env.APP_URL;
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
 
     if (
       !appUrl ||
-      !fromEmail ||
-      !process.env.RESEND_API_KEY ||
+      !process.env.BREVO_API_KEY ||
+      !process.env.BREVO_FROM_EMAIL ||
       !process.env.SUPABASE_URL ||
       !process.env.SUPABASE_SERVICE_ROLE_KEY
     ) {
@@ -389,26 +387,11 @@ export default async function handler(req, res) {
       }
 
       try {
-        const { error: emailError } = await resend.emails.send({
-          from: fromEmail,
-          to: [subscriber.email],
+        await sendBrevoEmail({
+          to: subscriber.email,
           subject: 'AirMesh: Your selected air-quality threshold was exceeded',
-          html: buildEmailHtml(exceeded),
-          text: [
-            'AirMesh daily air-quality notification',
-            '',
-            'One or more of your selected thresholds were exceeded.',
-            '',
-            ...exceeded.map(item =>
-              `${item.pollutant.toUpperCase()}: ${item.value} ${item.unit} (your threshold: ${item.threshold} ${item.unit}). Measured: ${formatMeasurementTime(item.timestamp)}`
-            ),
-            '',
-            'These are threshold notifications, not official CPCB AQI readings or medical advice.',
-            `Open AirMesh: ${appUrl}`
-          ].join('\n')
+          htmlContent: buildEmailHtml(exceeded)
         });
-
-        if (emailError) throw emailError;
 
         // Record the date only after Resend accepts the email.
         const { error: updateError } = await supabase
