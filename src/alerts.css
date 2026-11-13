@@ -600,3 +600,33 @@
   -webkit-text-fill-color: #59696E;
   opacity: .7;
 }
+
+
+/* Ensure alert form controls keep readable contrast inside the email panel. */
+.email-form label {
+  color: #1D2930 !important;
+}
+
+.email-form input,
+.email-form .alert-threshold-input input,
+.alert-request-controls input {
+  color: #1D2930 !important;
+  -webkit-text-fill-color: #1D2930;
+  background: #FFFFFF !important;
+  border-color: #C8D4D0 !important;
+}
+
+.email-form input::placeholder,
+.alert-threshold-input input::placeholder,
+.alert-request-controls input::placeholder {
+  color: #68777A !important;
+  -webkit-text-fill-color: #68777A;
+  opacity: 1;
+}
+
+.email-form .alert-threshold-input input:disabled {
+  color: #59696E !important;
+  -webkit-text-fill-color: #59696E;
+  background: #E9EEEC !important;
+  opacity: 1;
+}
