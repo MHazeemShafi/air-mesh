@@ -1,7 +1,8 @@
 export async function sendBrevoEmail({
   to,
   subject,
-  htmlContent
+  htmlContent,
+  textContent
 }) {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_FROM_EMAIL;
@@ -34,7 +35,8 @@ export async function sendBrevoEmail({
       },
       to: recipients,
       subject,
-      htmlContent
+      htmlContent,
+      ...(textContent ? { textContent } : {})
     })
   });
 
