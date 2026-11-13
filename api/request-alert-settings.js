@@ -91,16 +91,16 @@ export default async function handler(req, res) {
       htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#24352a;line-height:1.6">
           <h2 style="color:#315b3d">Manage your AirMesh alerts</h2>
-          <p>You requested a secure link to manage your AirMesh notification preferences.</p>
+          <p>You asked for a link to change your AirMesh email alerts.</p>
           <p>
             <a href="${settingsUrl}"
               style="display:inline-block;background:#315b3d;color:white;padding:12px 20px;text-decoration:none;border-radius:6px">
-              Manage alert settings
+              Update alert settings
             </a>
           </p>
-          <p>This link expires in 30 minutes.</p>
+          <p>This link expires in 30 minutes. If you did not request it, you can ignore this email.</p>
           <p>If you did not request this link, you can safely ignore this email.</p>
-          <p style="color:#718075;font-size:12px">AirMesh · Breathe with awareness</p>
+          <p style="color:#718075;font-size:12px">AirMesh | Air quality readings from Kadri, Mangaluru</p>
         </div>
       `
     });
