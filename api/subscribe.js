@@ -201,7 +201,7 @@ export default async function handler(req, res) {
 
     await sendBrevoEmail({
       to: email,
-      subject: 'Verify your email address | AirMesh',
+      subject: 'Confirm your AirMesh email address',
       htmlContent: `
         <!doctype html>
         <html lang="en">
@@ -213,7 +213,7 @@ export default async function handler(req, res) {
           </head>
           <body style="margin:0;padding:0;background:#eef4f7;font-family:Arial,Helvetica,sans-serif;color:#172b3a;">
             <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-              One quick step to activate your AirMesh air-quality alerts.
+              Confirm your email address to start AirMesh alerts.
             </div>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#eef4f7;padding:32px 12px;">
               <tr>
@@ -222,7 +222,7 @@ export default async function handler(req, res) {
                     <tr>
                       <td style="padding:28px 34px;background:#102d46;">
                         <div style="font-size:12px;letter-spacing:3px;font-weight:700;color:#9bd7e8;">A I R M E S H</div>
-                        <div style="margin-top:7px;font-size:13px;color:#d4e6ef;">Breathe with awareness.</div>
+                        <div style="margin-top:7px;font-size:13px;color:#d4e6ef;">Air quality readings for Mangaluru.</div>
                       </td>
                     </tr>
                     <tr>
@@ -231,16 +231,16 @@ export default async function handler(req, res) {
                           EMAIL VERIFICATION
                         </div>
                         <h1 style="margin:20px 0 12px;font-size:27px;line-height:1.25;color:#102d46;">
-                          One small step before you breathe easier.
+                          Confirm your email address.
                         </h1>
                         <p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#526574;">
-                          You asked AirMesh to send you air-quality notifications. Confirm that this email address belongs to you to activate your selected alert preferences.
+                          You signed up for AirMesh email alerts. Confirm this email address to activate the alerts and settings you selected.
                         </p>
                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:26px 0;">
                           <tr>
                             <td align="center" bgcolor="#147b9b" style="border-radius:8px;">
                               <a href="${verificationUrl}" target="_blank" style="display:inline-block;padding:15px 25px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;">
-                                Verify my email address
+                                Confirm email address
                               </a>
                             </td>
                           </tr>
@@ -254,9 +254,9 @@ export default async function handler(req, res) {
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f1f7f9;border-left:3px solid #58a9c0;border-radius:6px;">
                           <tr>
                             <td style="padding:15px 17px;">
-                              <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#17394d;">A quick security note</p>
+                              <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#17394d;">About this link</p>
                               <p style="margin:0;font-size:12px;line-height:1.6;color:#607482;">
-                                This verification link expires in 24 hours and can only be used to confirm this subscription. If you did not request AirMesh alerts, you can safely ignore this message.
+                                This link expires in 24 hours and can only be used to confirm this subscription. If you did not sign up for AirMesh alerts, you can ignore this email.
                               </p>
                             </td>
                           </tr>
@@ -267,7 +267,7 @@ export default async function handler(req, res) {
                       <td style="padding:22px 34px;background:#f7fafb;border-top:1px solid #e6eef1;">
                         <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#29495b;">A I R M E S H</p>
                         <p style="margin:0;font-size:11px;line-height:1.6;color:#81919b;">
-                          Air-quality information for more informed everyday decisions.<br>
+                          Air-quality readings from the Kadri station in Mangaluru.<br>
                           This is an automated email. Please do not reply.
                         </p>
                       </td>
@@ -280,19 +280,19 @@ export default async function handler(req, res) {
           </body>
         </html>
       `,
-      textContent: `AIR MESH — Breathe with awareness.
+      textContent: `AIR MESH — Air quality readings for Mangaluru.
 
-Verify your email address to activate your AirMesh air-quality alerts.
+Confirm your email address to start AirMesh alerts.
 
 Open this link:
 ${verificationUrl}
 
-This link expires in 24 hours. If you did not request AirMesh alerts, ignore this email.`
+This link expires in 24 hours. If you did not sign up for AirMesh alerts, ignore this email.`
     });
 
     return res.status(200).json({
       message:
-        'Check your inbox for a verification link. Your selected preferences activate after verification.'
+        'Check your inbox for a confirmation link. Your alert settings will start after you verify your email.'
     });
 
   } catch (error) {
