@@ -1,14 +1,13 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const hashToken = token =>
   createHash('sha256').update(token).digest('hex');
@@ -77,27 +76,19 @@ export default async function handler(req, res) {
     if (updateError) throw updateError;
 
     const appUrl = process.env.APP_URL;
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
 
-    if (
-      !appUrl ||
-      !fromEmail ||
-      !process.env.RESEND_API_KEY
-    ) {
-      throw new Error(
-        'Email service configuration is incomplete.'
-      );
+    if (!appUrl) {
+      throw new Error('APP_URL is not configured.');
     }
 
     // Must match the URL parameter read by App.jsx.
     const settingsUrl =
       `${appUrl.replace(/\/$/, '')}/?manageAlerts=${token}`;
 
-    const { error: emailError } = await resend.emails.send({
-      from: fromEmail,
-      to: [subscriber.email],
+    await sendBrevoEmail({
+      to: subscriber.email,
       subject: 'Your AirMesh alert settings link',
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#24352a;line-height:1.6">
           <h2 style="color:#315b3d">Manage your AirMesh alerts</h2>
           <p>You requested a secure link to manage your AirMesh notification preferences.</p>
@@ -111,11 +102,8 @@ export default async function handler(req, res) {
           <p>If you did not request this link, you can safely ignore this email.</p>
           <p style="color:#718075;font-size:12px">AirMesh · Breathe with awareness</p>
         </div>
-      `,
-      text: `Manage your AirMesh alert settings: ${settingsUrl}\n\nThis link expires in 30 minutes. If you did not request it, ignore this email.`
+      `
     });
-
-    if (emailError) throw emailError;
 
     return res.status(200).json({
       message: genericMessage
