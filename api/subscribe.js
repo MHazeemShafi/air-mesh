@@ -280,7 +280,8 @@ export default async function handler(req, res) {
           </body>
         </html>
       `,
-      textContent: `AIR MESH — Air quality readings for Mangaluru.
+      textContent: `AIRMESH
+Air quality readings for Mangaluru.
 
 Confirm your email address to start AirMesh alerts.
 
