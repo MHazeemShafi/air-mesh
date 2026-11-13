@@ -1,13 +1,12 @@
-﻿import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ALLOWED_POLLUTANTS = [
   'pm25', 'pm10', 'o3', 'no2',
@@ -173,71 +172,47 @@ export default async function handler(req, res) {
 
     if (preferenceError) throw preferenceError;
 
-    if (
-      !process.env.APP_URL ||
-      !process.env.RESEND_FROM_EMAIL ||
-      !process.env.RESEND_API_KEY
-    ) {
-      throw new Error(
-        'Email service configuration is incomplete.'
-      );
+    if (!process.env.APP_URL) {
+      throw new Error('APP_URL is not configured.');
     }
 
     const verificationUrl =
       `${process.env.APP_URL.replace(/\/$/, '')}` +
       `/api/verify-subscription?token=${token}`;
 
-    const { error: emailError } =
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL,
-        to: email,
-        subject: 'Confirm your AirMesh email alerts',
-
-        html: `
-          <div style="
-            font-family:Arial,sans-serif;
-            max-width:560px;
-            margin:auto;
-            color:#17231b;
-            line-height:1.6
-          ">
-            <h2>Confirm your AirMesh subscription</h2>
-
-            <p>
-              Confirm your email address to activate
-              the notification preferences you selected.
-            </p>
-
-            <p>
-              <a href="${verificationUrl}" style="
-                display:inline-block;
-                background:#245d3c;
-                color:white;
-                padding:12px 18px;
-                border-radius:6px;
-                text-decoration:none
-              ">
-                Verify email
-              </a>
-            </p>
-
-            <p>
-              This link expires in 24 hours.
-              Ignore this email if you did not request it.
-            </p>
-          </div>
-        `,
-
-        text: `
-Confirm your AirMesh subscription:
-
-${verificationUrl}
-
-This link expires in 24 hours.
-        `
-      });
-
-    if (emailError) throw emailError;
+    await sendBrevoEmail({
+      to: email,
+      subject: 'Confirm your AirMesh email alerts',
+      htmlContent: `
+        <div style="
+          font-family:Arial,sans-serif;
+          max-width:560px;
+          margin:auto;
+          color:#17231b;
+          line-height:1.6
+        ">
+          <h2>Confirm your AirMesh subscription</h2>
+          <p>
+            Confirm your email address to activate
+            the notification preferences you selected.
+          </p>
+          <p>
+            <a href="${verificationUrl}" style="
+              display:inline-block;
+              background:#245d3c;
+              color:white;
+              padding:12px 18px;
+              border-radius:6px;
+              text-decoration:none
+            ">Verify email</a>
+          </p>
+          <p>
+            This link expires in 24 hours.
+            Ignore this email if you did not request it.
+          </p>
+        </div>
+      `
+    });
 
     return res.status(200).json({
       message:
