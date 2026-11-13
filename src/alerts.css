@@ -5,16 +5,16 @@
    ========================================== */
 
 :root {
-  --alert-bg: #EAF3FA;
-  --alert-surface: #F5F8FA;
-  --alert-surface-alt: #DCEAF3;
-  --alert-border: #D1E1EC;
-  --alert-navy: #173B5C;
-  --alert-blue: #28618C;
-  --alert-blue-light: #6599BB;
-  --alert-muted: #668196;
-  --alert-success: #367D69;
-  --alert-error: #B65E62;
+  --alert-bg: #F5F6F4;
+  --alert-surface: #FFFFFF;
+  --alert-surface-alt: #EEF1EF;
+  --alert-border: #DCE3E0;
+  --alert-navy: #1D2930;
+  --alert-blue: #286477;
+  --alert-blue-light: #34798A;
+  --alert-muted: #59696E;
+  --alert-success: #286B55;
+  --alert-error: #B64E4E;
 }
 
 .alert-frequency-banner,
@@ -22,10 +22,10 @@
 .alert-manage-panel {
   background: var(--alert-surface);
   border: 1px solid var(--alert-border);
-  border-radius: 18px;
+  border-radius: 8px;
   padding: 24px;
   margin-bottom: 22px;
-  box-shadow: 0 5px 20px rgba(35, 75, 105, 0.035);
+  box-shadow: none;
 }
 
 .alert-frequency-banner {
@@ -44,7 +44,7 @@
   place-items: center;
   color: var(--alert-blue);
   background: #DFEDF6;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .alert-frequency-banner strong,
@@ -91,7 +91,7 @@
   min-height: 94px;
   padding: 13px;
   border: 1px solid var(--alert-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: #F8FAFB;
   cursor: pointer;
   transition: border-color 180ms ease, background 180ms ease;
@@ -151,7 +151,7 @@
   padding: 13px 14px;
   margin: 14px 0;
   border: 1px solid var(--alert-border);
-  border-radius: 12px;
+  border-radius: 8px;
   background: #F5F8FA;
 }
 
@@ -256,7 +256,7 @@
   min-height: 62px;
   padding: 10px;
   border: 1px solid var(--alert-border);
-  border-radius: 11px;
+  border-radius: 8px;
   background: #F8FAFB;
   opacity: 0.72;
   transition: border-color 180ms ease, background 180ms ease, opacity 180ms ease;
@@ -349,7 +349,7 @@
   margin-top: 14px;
   padding: 11px 13px;
   background: #E7F0F5;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .alert-info-note p {
@@ -540,107 +540,26 @@
     transition: none;
   }
 }
-/* =========================================
-   AIRMESH — CLOUD & NAVY ALERT THEME
-   ========================================= */
 
 .alert-frequency-banner,
 .alert-existing-panel,
-.alert-manage-panel {
-  background: #1D3852;
-  border-color: #34536D;
-}
-
-.alert-frequency-icon,
-.alert-panel-icon,
-.alert-profile-icon {
-  color: #A9D1E9;
-  background: #91C2DF18;
-}
-
-.alert-frequency-banner strong,
-.alert-existing-panel h2,
-.alert-panel-heading h2,
-.alert-profile-option strong,
-.alert-enable-row strong,
-.alert-threshold-heading strong,
-.alert-pollutant-choice strong {
-  color: #E4EEF5;
-}
-
-.alert-frequency-banner p,
-.alert-existing-panel p,
-.alert-panel-heading p,
-.alert-profile-option small,
-.alert-enable-row small,
-.alert-threshold-heading small,
-.alert-pollutant-choice small {
-  color: #A9BECE;
-}
-
-.alert-form-divider {
-  background: #34536D;
-}
-
+.alert-manage-panel,
 .alert-profile-option,
 .alert-enable-row,
-.alert-threshold-row {
-  border-color: #34536D;
-  background: #203D57;
+.alert-threshold-row,
+.alert-info-note {
+  box-shadow: none;
 }
-
-.alert-profile-option.active,
-.alert-threshold-row.selected {
-  border-color: #82B5D5;
-  background: #294B67;
+.alert-threshold-input input:focus,
+.alert-request-controls input:focus {
+  box-shadow: none;
+  outline: 2px solid #AFC3BF;
+  outline-offset: 1px;
 }
-
-.alert-profile-option input,
-.alert-pollutant-choice input {
-  accent-color: #91C2DF;
-}
-
-.alert-switch span {
-  background: #526B80;
-}
-
-.alert-switch input:checked + span {
-  background: #669BBE;
-}
-
-.alert-switch input:focus-visible + span {
-  outline-color: #A9D1E9;
-}
-
-.alert-threshold-input input,
-.alert-request-controls input {
-  color: #E4EEF5;
-  background: #14283D;
-  border-color: #34536D;
-}
-
-.alert-threshold-input input:focus {
-  border-color: #91C2DF;
-}
-
-.alert-threshold-input span {
-  color: #A9BECE;
-}
-
-.alert-secondary-button {
-  color: #A9BECE;
-  border-color: #456783;
-}
-
+.alert-profile-option:hover,
 .alert-secondary-button:hover {
-  color: #E4EEF5;
-  border-color: #91C2DF;
+  transform: none;
 }
-
-.success-message {
-  color: #A9D1E9;
-}
-
-.error-message {
-  color: #E58F91;
+.alert-secondary-button {
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
 }
