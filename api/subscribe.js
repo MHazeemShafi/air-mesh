@@ -8,10 +8,18 @@ const supabase = createClient(
 );
 
 
-const ALLOWED_POLLUTANTS = [
-  'pm25', 'pm10', 'o3', 'no2',
-  'so2', 'co', 'no', 'nox'
-];
+const ALLOWED_UNITS = {
+  pm25: 'µg/m³',
+  pm10: 'µg/m³',
+  o3: 'µg/m³',
+  no2: 'ppb',
+  so2: 'ppb',
+  co: 'ppb',
+  no: 'ppb',
+  nox: 'ppb'
+};
+
+const ALLOWED_POLLUTANTS = Object.keys(ALLOWED_UNITS);
 
 const DEFAULT_THRESHOLDS = {
   pm25: {
@@ -47,16 +55,21 @@ function cleanPreferences(input = {}) {
         : null);
 
     if (
-      threshold &&
-      Number.isFinite(Number(threshold.value)) &&
-      Number(threshold.value) > 0 &&
-      typeof threshold.unit === 'string'
+      !threshold ||
+      !Number.isFinite(Number(threshold.value)) ||
+      Number(threshold.value) <= 0 ||
+      Number(threshold.value) > 100000 ||
+      threshold.unit !== ALLOWED_UNITS[pollutant]
     ) {
-      thresholds[pollutant] = {
-        value: Number(threshold.value),
-        unit: threshold.unit
+      return {
+        error: `Enter a valid threshold for ${pollutant.toUpperCase()} in ${ALLOWED_UNITS[pollutant]}.`
       };
     }
+
+    thresholds[pollutant] = {
+      value: Number(threshold.value),
+      unit: ALLOWED_UNITS[pollutant]
+    };
   }
 
   return {
@@ -91,6 +104,12 @@ export default async function handler(req, res) {
     const preferences = cleanPreferences(
       req.body?.preferences
     );
+
+    if (preferences.error) {
+      return res.status(400).json({
+        error: preferences.error
+      });
+    }
 
     const { data: existing, error: lookupError } =
       await supabase
