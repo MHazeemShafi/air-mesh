@@ -749,8 +749,8 @@ function App() {
             </span>
 
             <h1>
-              Breathe with<br />
-              <span>the facts.</span>
+              Know the air<br />
+              <span>around you.</span>
             </h1>
 
             <p>
