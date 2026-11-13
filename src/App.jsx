@@ -1,5 +1,5 @@
 ﻿
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import GradientWave from './components/GradientWave';
 import L from 'leaflet';
 
