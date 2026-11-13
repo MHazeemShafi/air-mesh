@@ -200,16 +200,16 @@ function buildEmailHtml(exceeded) {
     <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#26382b;line-height:1.6">
       <div style="padding:24px;background:#203d2a;color:white;border-radius:10px 10px 0 0">
         <h1 style="margin:0;font-size:23px">AirMesh</h1>
-        <p style="margin:5px 0 0;color:#c7dfca">Daily air-quality notification</p>
+        <p style="margin:5px 0 0;color:#c7dfca">Daily air-quality alert</p>
       </div>
 
       <div style="padding:24px;border:1px solid #e1e9e1;border-top:0">
-        <h2 style="font-size:19px">Your selected thresholds were exceeded</h2>
+        <h2 style="font-size:19px">A reading went above your limit</h2>
 
         <p>
-          The latest eligible measurements from
+          These recent readings from
           <strong>Kadri, Mangaluru - KSPCB</strong>
-          exceeded one or more thresholds in your notification settings.
+          were above one or more limits in your alert settings.
         </p>
 
         <div style="overflow-x:auto">
@@ -229,25 +229,22 @@ function buildEmailHtml(exceeded) {
         </div>
 
         <p style="margin-top:22px;font-size:13px;color:#647267">
-          These notifications compare measurements with the thresholds
-          you selected. They are not official CPCB AQI readings,
-          medical advice, or a prediction of health effects.
+          These alerts compare station readings with the limits you selected. They are not official CPCB AQI values or medical advice.
         </p>
 
         <p style="font-size:13px;color:#647267">
-          Measurements are from the Kadri monitoring station and may
-          not represent conditions at your exact location.
+          These readings come from the Kadri station. Air quality may be different in your neighbourhood or indoors.
         </p>
 
         <p style="margin-top:24px">
           <a href="${escapeHtml(process.env.APP_URL)}"
              style="display:inline-block;padding:11px 18px;background:#315b3d;color:white;text-decoration:none;border-radius:6px">
-            Open AirMesh
+            View AirMesh readings
           </a>
         </p>
 
         <p style="font-size:12px;color:#849087">
-          AirMesh · Breathe with awareness
+          AirMesh | Air quality readings from Kadri, Mangaluru
         </p>
       </div>
     </div>
@@ -389,7 +386,7 @@ export default async function handler(req, res) {
       try {
         await sendBrevoEmail({
           to: subscriber.email,
-          subject: 'AirMesh: Your selected air-quality threshold was exceeded',
+          subject: 'AirMesh: A reading went above your alert limit',
           htmlContent: buildEmailHtml(exceeded)
         });
 
