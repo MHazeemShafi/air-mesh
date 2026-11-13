@@ -1,6 +1,5 @@
 ﻿
 import { useEffect, useMemo, useRef, useState } from 'react';
-import GradientWave from './components/GradientWave';
 import L from 'leaflet';
 
 import {
@@ -1762,10 +1761,7 @@ function App() {
   };
 
   return (
-    <>
-      <GradientWave />
-
-      <div className="airmesh-content">
+    <><div className="airmesh-content">
         <div className="app-shell">
 
           {sidebarOpen && (
