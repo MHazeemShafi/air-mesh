@@ -170,7 +170,7 @@ function findExceededThresholds(preference, readings) {
         value: reading.value,
         threshold: thresholdValue,
         unit: reading.unit,
-        timestamp: reading.time
+        timestamp: reading.timestamp
       });
     }
   }
