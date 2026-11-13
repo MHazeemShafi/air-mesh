@@ -125,7 +125,7 @@ async function readJsonResponse(response) {
   try {
     return text ? JSON.parse(text) : {};
   } catch {
-    throw new Error('The server returned an invalid response.');
+    throw new Error('The server sent a response the page could not read.');
   }
 }
 
@@ -365,7 +365,7 @@ function App() {
       const data = await response.json();
 
       if (!Array.isArray(data.readings)) {
-        throw new Error('Invalid API response: readings are missing');
+        throw new Error('The station response did not include any readings.');
       }
 
       setStationData(data);
@@ -373,7 +373,7 @@ function App() {
       setError('');
       setStatus(data.readings.length ? 'available' : 'unavailable');
     } catch (err) {
-      setError(err.message || 'Unable to retrieve station data');
+      setError(err.message || 'Could not load station data.');
       setStatus('error');
     } finally {
       requestRef.current = false;
@@ -423,7 +423,7 @@ function App() {
           throw new Error(
             getApiMessage(
               data.error,
-              'Unable to load your settings.'
+              'Could not load your settings.'
             )
           );
         }
@@ -454,12 +454,12 @@ function App() {
         setThresholds(nextThresholds);
 
         setManageStatus(
-          'Your current notification settings have loaded.'
+          'Your saved alert settings are ready.'
         );
       } catch (err) {
         if (!cancelled) {
           setManageError(
-            err.message || 'Unable to load settings.'
+            err.message || 'Could not load settings.'
           );
         }
       } finally {
@@ -482,7 +482,7 @@ function App() {
     const cleanThresholds = {};
 
     if (selectedPollutants.length === 0) {
-      throw new Error('Select at least one pollutant.');
+      throw new Error('Choose at least one pollutant.');
     }
 
     for (const id of selectedPollutants) {
@@ -549,14 +549,14 @@ function App() {
       setSubscribeStatus(
         getApiMessage(
           data.message,
-          'Check your inbox to confirm your subscription.'
+          'Check your inbox for the confirmation email.'
         )
       );
 
       setEmail('');
     } catch (err) {
       setSubscribeStatus(
-        err.message || 'Unable to subscribe.'
+        err.message || 'Could not start your subscription.'
       );
     } finally {
       setSubscribeLoading(false);
@@ -587,7 +587,7 @@ function App() {
         throw new Error(
           getApiMessage(
             data.error || data.message,
-            'Unable to request a settings link.'
+            'Could not request a settings link.'
           )
         );
       }
@@ -595,14 +595,14 @@ function App() {
       setSettingsRequestStatus(
         getApiMessage(
           data.message,
-          'If your verified subscription exists, a settings link will be sent to your email.'
+          'If this email has a verified subscription, we will send a settings link.'
         )
       );
 
       setSettingsEmail('');
     } catch (err) {
       setSettingsRequestStatus(
-        err.message || 'Unable to request a settings link.'
+        err.message || 'Could not request a settings link.'
       );
     } finally {
       setSettingsRequestLoading(false);
@@ -637,7 +637,7 @@ function App() {
         throw new Error(
           getApiMessage(
             data.error,
-            'Unable to save your preferences.'
+            'Could not save your alert settings.'
           )
         );
       }
@@ -645,12 +645,12 @@ function App() {
       setManageStatus(
         getApiMessage(
           data.message,
-          'Your notification settings have been saved.'
+          'Your alert settings have been saved.'
         )
       );
     } catch (err) {
       setManageError(
-        err.message || 'Unable to save settings.'
+        err.message || 'Could not save settings.'
       );
     } finally {
       setManageSaving(false);
@@ -733,7 +733,7 @@ function App() {
         <div className="hero-topline">
           <span className="hero-kicker">
             <span className="live-dot" />
-            LOCAL ENVIRONMENTAL MONITORING
+            AIR QUALITY IN MANGALURU
           </span>
 
           <span className="hero-location">
@@ -745,31 +745,30 @@ function App() {
         <div className="hero-main">
           <div className="hero-copy">
             <span className="hero-overline">
-              A CLEARER VIEW OF THE AIR AROUND YOU
+              AIR QUALITY READINGS FROM KADRI
             </span>
 
             <h1>
               Breathe with<br />
-              <span>awareness.</span>
+              <span>the facts.</span>
             </h1>
 
             <p>
-              Understand local air measurements, explore environmental
-              conditions, and make more informed everyday decisions.
+              See the latest readings from the Kadri station and check when they were recorded.
             </p>
 
             <button
               className="hero-link"
               onClick={() => changeTab('Pollutants')}
             >
-              Explore measurements <ArrowUpRight size={16} />
+              View pollutant readings <ArrowUpRight size={16} />
             </button>
           </div>
 
           <div className="hero-reading">
             <div className="reading-heading">
               <span className="reading-indicator" />
-              LATEST PM2.5 MEASUREMENT
+              LATEST PM2.5 READING
             </div>
 
             <div className="hero-reading-number">
@@ -778,7 +777,7 @@ function App() {
             </div>
 
             <div className="reading-meta">
-              <span>Reported measurement</span>
+              <span>Station reading</span>
               <span className={`freshness-label ${freshness.toLowerCase().replace(' ', '-')}`}>
                 {freshness}
               </span>
@@ -788,7 +787,7 @@ function App() {
               <Clock size={13} />
               {pm25
                 ? formatTime(pm25.time)
-                : 'Waiting for readings'}
+                : 'No PM2.5 reading available'}
             </div>
           </div>
         </div>
@@ -801,8 +800,8 @@ function App() {
 
           <span>
             {latestReading
-              ? `Latest sensor reading: ${formatTime(latestReading.time)}`
-              : 'Waiting for sensor data'}
+              ? `Latest station reading: ${formatTime(latestReading.time)}`
+              : 'Waiting for station data'}
           </span>
         </div>
       </section>
@@ -823,7 +822,7 @@ function App() {
             <Activity size={17} />
           </span>
           <div>
-            <small>CURRENT READINGS</small>
+            <small>AVAILABLE READINGS</small>
             <strong>{currentCount}</strong>
           </div>
         </div>
@@ -833,7 +832,7 @@ function App() {
             <Clock size={17} />
           </span>
           <div>
-            <small>LAST SENSOR UPDATE</small>
+            <small>LAST STATION UPDATE</small>
             <strong className="stat-time">
               {latestReading
                 ? formatTime(latestReading.time)
@@ -857,7 +856,7 @@ function App() {
         <div className="section-heading">
           <div>
             <span className="eyebrow">01 / LIVE MONITORING</span>
-            <h2>What is the air reporting?</h2>
+            <h2>Readings from the Kadri station</h2>
             <p>{STATION.name}</p>
           </div>
 
@@ -877,7 +876,7 @@ function App() {
         {status === 'loading' && (
           <div className="notice-card">
             <RefreshCw className="spin" size={18} />
-            Retrieving monitoring station data...
+            Loading station readings...
           </div>
         )}
 
@@ -885,7 +884,7 @@ function App() {
           <div className="notice-card error-card">
             <AlertCircle size={20} />
             <div>
-              <strong>Unable to retrieve sensor data</strong>
+              <strong>Could not load station readings</strong>
               <p>{error}</p>
               <button className="text-button" onClick={fetchData}>
                 Try again
@@ -897,7 +896,7 @@ function App() {
         {status === 'unavailable' && (
           <div className="notice-card">
             <AlertTriangle size={20} />
-            No sufficiently recent sensor readings are available.
+            No recent readings are available from this station.
           </div>
         )}
 
@@ -906,8 +905,8 @@ function App() {
             <div className="measurement-feature">
               <div className="measurement-feature-top">
                 <div>
-                  <span className="eyebrow">FINE PARTICULATE MATTER</span>
-                  <h3>PM2.5 concentration</h3>
+                  <span className="eyebrow">FINE PARTICLES</span>
+                  <h3>PM2.5 level</h3>
                 </div>
 
                 <span className="measurement-icon">
@@ -921,7 +920,7 @@ function App() {
               </div>
 
               <div className="measurement-bottom">
-                <span>Sensor-reported value</span>
+                <span>Value reported by the station</span>
                 <span>
                   {pm25
                     ? formatTime(pm25.time)
@@ -933,22 +932,20 @@ function App() {
             <div className="info-note">
               <Info size={18} />
               <p>
-                This is a PM2.5 measurement, not an official CPCB AQI.
-                Official AQI calculation requires relevant pollutant
-                sub-indices and prescribed averaging periods.
+                This page shows the PM2.5 reading. It does not show the official CPCB AQI, which is calculated using multiple pollutants and set averaging periods.
               </p>
             </div>
 
             <Accordion
               title="Other pollutant measurements"
-              subtitle="Expand to explore the available readings"
+              subtitle="Open to see the readings"
             >
               {renderPollutantGrid(POLLUTANTS)}
             </Accordion>
 
             <Accordion
-              title="Weather and environmental conditions"
-              subtitle="Temperature, humidity and wind measurements"
+              title="Weather readings"
+              subtitle="Temperature, humidity and wind"
             >
               {renderPollutantGrid(WEATHER)}
             </Accordion>
@@ -959,9 +956,9 @@ function App() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">02 / GEOGRAPHIC CONTEXT</span>
-            <h2>Where is this data coming from?</h2>
-            <p>Explore the reporting station's location.</p>
+            <span className="eyebrow">02 / STATION LOCATION</span>
+            <h2>Where was this reading recorded?</h2>
+            <p>See the location of the monitoring station.</p>
           </div>
 
           <span className="small-tag">01 STATION</span>
@@ -976,7 +973,7 @@ function App() {
 
             <span className="map-status">
               <span className="live-dot" />
-              MONITORING LOCATION
+              STATION LOCATION
             </span>
           </div>
 
@@ -995,15 +992,15 @@ function App() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">03 / DATA TRANSPARENCY</span>
-            <h2>Know where the numbers come from.</h2>
-            <p>Measurement age, validation and source information.</p>
+            <span className="eyebrow">03 / ABOUT THE DATA</span>
+            <h2>Where the readings come from</h2>
+            <p>When readings were recorded and where they came from.</p>
           </div>
         </div>
 
         <Accordion
-          title="Data quality and timestamps"
-          subtitle="View current, stale and invalid reading counts"
+          title="Reading times and data checks"
+          subtitle="See how many readings are current, old or invalid"
         >
           <div className="quality-grid">
             <div><small>CURRENT</small><strong>{currentCount}</strong></div>
@@ -1014,7 +1011,7 @@ function App() {
 
           <div className="metadata-list">
             <div>
-              <span>API fetched</span>
+              <span>Data received</span>
               <strong>{formatTime(stationData?.fetchedAt)}</strong>
             </div>
             <div>
@@ -1022,7 +1019,7 @@ function App() {
               <strong>{formatTime(latestReading?.time)}</strong>
             </div>
             <div>
-              <span>Last browser fetch</span>
+              <span>Last page update</span>
               <strong>{formatTime(lastFetch)}</strong>
             </div>
             <div>
@@ -1043,11 +1040,10 @@ function App() {
         </div>
 
         <div>
-          <span className="eyebrow">PERSONAL AWARENESS</span>
-          <h2>Make environmental information easier to follow.</h2>
+          <span className="eyebrow">HEALTH GUIDANCE</span>
+          <h2>Get air-quality readings by email.</h2>
           <p>
-            Explore general guidance and learn how to stay informed
-            about local monitoring measurements.
+            Read general guidance and learn what the station measurements can tell you.
           </p>
         </div>
 
@@ -1060,8 +1056,8 @@ function App() {
       </section>
 
       <footer className="page-footer">
-        <span>AIRMESH / MANGALURU AIR MONITORING</span>
-        <span>REAL SENSOR DATA / CPCB VIA OPENAQ</span>
+        <span>AIRMESH / KADRI STATION</span>
+        <span>STATION DATA / CPCB VIA OPENAQ</span>
       </footer>
     </div>
   );
@@ -1071,23 +1067,22 @@ function App() {
   const renderPollutants = () => (
     <div className="page-content">
       <section className="page-title">
-        <span className="eyebrow">SENSOR MEASUREMENTS</span>
-        <h1>Explore the readings.</h1>
+        <span className="eyebrow">POLLUTANT READINGS</span>
+        <h1>Pollutant readings</h1>
         <p>
-          Individual measurements reported by the Kadri monitoring station.
-          Values are displayed in the units supplied by the source.
+          Measurements reported by the Kadri station. Values use the units provided by the data source.
         </p>
       </section>
 
       <div className="measurement-summary">
         <div>
-          <span className="eyebrow">AVAILABLE MEASUREMENTS</span>
+          <span className="eyebrow">READINGS AVAILABLE</span>
           <strong>{currentCount}</strong>
-          <small>Current readings</small>
+          <small>Readings available</small>
         </div>
 
         <div>
-          <span className="eyebrow">LAST SENSOR UPDATE</span>
+          <span className="eyebrow">LAST STATION UPDATE</span>
           <strong className="summary-time">
             {latestReading
               ? formatTime(latestReading.time)
@@ -1137,11 +1132,10 @@ function App() {
   const renderStation = () => (
     <div className="page-content">
       <section className="page-title">
-        <span className="eyebrow">MONITORING NETWORK</span>
-        <h1>One station. Real measurements.</h1>
+        <span className="eyebrow">MONITORING STATION</span>
+        <h1>One station in Kadri</h1>
         <p>
-          Information about the real-world monitoring location
-          currently connected to AirMesh.
+          AirMesh currently uses readings from this monitoring station.
         </p>
       </section>
 
@@ -1150,7 +1144,7 @@ function App() {
           <span className="station-symbol">
             <MapPin size={23} />
           </span>
-          <span className="eyebrow">REGISTERED MONITORING LOCATION</span>
+          <span className="eyebrow">REGISTERED STATION LOCATION</span>
         </div>
 
         <h2>{stationData?.station || STATION.name}</h2>
@@ -1175,7 +1169,7 @@ function App() {
           </div>
         </div>
 
-        <Accordion title="Technical station information">
+        <Accordion title="Station data">
           <div className="metadata-list">
             <div>
               <span>Invalid readings</span>
@@ -1194,7 +1188,7 @@ function App() {
               <strong>{formatTime(latestReading?.time)}</strong>
             </div>
             <div>
-              <span>API fetched</span>
+              <span>Data received</span>
               <strong>{formatTime(stationData?.fetchedAt)}</strong>
             </div>
           </div>
@@ -1206,7 +1200,7 @@ function App() {
           <div>
             <span className="eyebrow">LOCATION</span>
             <h2>Kadri, Mangaluru</h2>
-            <p>Geographic location of the reporting station.</p>
+            <p>Location of the station that reports these readings.</p>
           </div>
         </div>
 
@@ -1218,7 +1212,7 @@ function App() {
             </div>
             <span className="map-status">
               <span className="live-dot" />
-              MONITORING LOCATION
+              STATION LOCATION
             </span>
           </div>
 
@@ -1241,11 +1235,10 @@ function App() {
   const renderGuidance = () => (
     <div className="page-content">
       <section className="page-title">
-        <span className="eyebrow">ENVIRONMENT & WELLBEING</span>
-        <h1>Understand your exposure.</h1>
+        <span className="eyebrow">AIR QUALITY AND HEALTH</span>
+        <h1>Air quality and your health</h1>
         <p>
-          General information to help interpret air-quality measurements.
-          This is educational guidance, not a personal medical assessment.
+          General information about air-quality readings. This page is for education and is not medical advice.
         </p>
       </section>
 
@@ -1255,12 +1248,10 @@ function App() {
         </div>
 
         <div>
-          <span className="eyebrow">A MORE INFORMED APPROACH</span>
-          <h2>Air quality can affect people differently.</h2>
+          <span className="eyebrow">BASIC INFORMATION</span>
+          <h2>Air pollution does not affect everyone in the same way.</h2>
           <p>
-            Children, older adults, and people with respiratory or
-            cardiovascular conditions may be more sensitive to air pollution.
-            Individual responses vary.
+            Children, older adults, and people with heart or lung conditions may be more sensitive to air pollution. Responses vary from person to person.
           </p>
         </div>
       </div>
@@ -1268,9 +1259,9 @@ function App() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">01 / UNDERSTANDING PM2.5</span>
-            <h2>Why fine particles matter</h2>
-            <p>Learn what this measurement represents.</p>
+            <span className="eyebrow">01 / ABOUT PM2.5</span>
+            <h2>What PM2.5 means</h2>
+            <p>A short explanation of this reading.</p>
           </div>
         </div>
 
@@ -1279,11 +1270,9 @@ function App() {
             <span className="guidance-card-icon">
               <Cloud size={20} />
             </span>
-            <h3>Fine particles</h3>
+            <h3>Small airborne particles</h3>
             <p>
-              PM2.5 refers to airborne particles with a diameter
-              of 2.5 micrometres or smaller. These particles can
-              travel deep into the respiratory system.
+              PM2.5 measures airborne particles that are 2.5 micrometres wide or smaller. They can travel deep into the lungs.
             </p>
           </article>
 
@@ -1291,11 +1280,9 @@ function App() {
             <span className="guidance-card-icon">
               <HeartPulse size={20} />
             </span>
-            <h3>Individual sensitivity</h3>
+            <h3>Different health needs</h3>
             <p>
-              Some people may be more sensitive to pollution.
-              Personal health needs and medical advice should
-              guide individual decisions.
+              Some people are more affected by air pollution than others. Follow advice from your healthcare professional.
             </p>
           </article>
 
@@ -1303,11 +1290,9 @@ function App() {
             <span className="guidance-card-icon">
               <Clock size={20} />
             </span>
-            <h3>Check measurement time</h3>
+            <h3>Check when it was recorded</h3>
             <p>
-              Always consider when a measurement was recorded.
-              A delayed reading may not represent current
-              outdoor conditions.
+              Check the timestamp. An older reading may not reflect current outdoor conditions.
             </p>
           </article>
         </div>
@@ -1316,9 +1301,9 @@ function App() {
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">02 / PRACTICAL AWARENESS</span>
-            <h2>Things worth checking</h2>
-            <p>Useful considerations when reviewing local readings.</p>
+            <span className="eyebrow">02 / CHECKING THE READINGS</span>
+            <h2>A few things to keep in mind</h2>
+            <p>Keep these points in mind when checking the readings.</p>
           </div>
         </div>
 
@@ -1337,10 +1322,9 @@ function App() {
           <div>
             <span>02</span>
             <section>
-              <strong>Look beyond one pollutant</strong>
+              <strong>Check other pollutants too</strong>
               <p>
-                Different pollutants have different sources
-                and health considerations.
+                Pollutants come from different sources and can affect health in different ways.
               </p>
             </section>
           </div>
@@ -1348,10 +1332,9 @@ function App() {
           <div>
             <span>03</span>
             <section>
-              <strong>Consider your surroundings</strong>
+              <strong>Think about nearby sources</strong>
               <p>
-                Traffic, construction, weather and indoor
-                sources can affect exposure.
+                Traffic, construction, weather and indoor sources can all affect the air around you.
               </p>
             </section>
           </div>
@@ -1359,10 +1342,9 @@ function App() {
           <div>
             <span>04</span>
             <section>
-              <strong>Follow professional advice</strong>
+              <strong>Follow medical advice</strong>
               <p>
-                People with existing health conditions should
-                follow guidance from their healthcare professional.
+                If you have a health condition, follow the advice of your healthcare professional.
               </p>
             </section>
           </div>
@@ -1372,10 +1354,7 @@ function App() {
       <div className="info-note">
         <Info size={18} />
         <p>
-          AirMesh currently displays measurements from one monitoring station.
-          These readings do not represent every neighbourhood or indoor
-          environment in Mangaluru. This page does not diagnose, predict,
-          or treat health conditions.
+          AirMesh currently shows readings from one station in Kadri, Mangaluru. They may not reflect conditions in other neighbourhoods or indoors. This page does not diagnose or treat health conditions.
         </p>
       </div>
     </div>
@@ -1450,7 +1429,7 @@ function App() {
           <span>
             <strong>Respiratory-sensitive</strong>
             <small>
-              Starts with PM2.5 at 15 µg/m³. You can change this threshold.
+              Starts with a PM2.5 limit of 15 µg/m³. You can change it.
             </small>
           </span>
         </label>
@@ -1471,7 +1450,7 @@ function App() {
           <span>
             <strong>General updates</strong>
             <small>
-              Choose the pollutant measurements you want to follow.
+              Choose which pollutant readings you want alerts for.
             </small>
           </span>
         </label>
@@ -1492,7 +1471,7 @@ function App() {
           <span>
             <strong>Custom profile</strong>
             <small>
-              Set your own pollutant selection and thresholds.
+              Choose the pollutants and limits you want.
             </small>
           </span>
         </label>
@@ -1501,7 +1480,7 @@ function App() {
       <div className="alert-enable-row">
         <div>
           <strong>Enable daily notifications</strong>
-          <small>Turn this off to pause your email alerts.</small>
+          <small>Switch this off to pause alerts.</small>
         </div>
 
         <label className="alert-switch">
@@ -1518,7 +1497,7 @@ function App() {
         <div>
           <strong>Pollutant thresholds</strong>
           <small>
-            Receive an email when a selected fresh reading is above your limit.
+            Get an email when a recent reading goes above your chosen limit.
           </small>
         </div>
       </div>
@@ -1528,9 +1507,7 @@ function App() {
       <div className="info-note alert-info-note">
         <Info size={18} />
         <p>
-          PM2.5's starting value of 15 µg/m³ is a reference-based setting,
-          not a medical threshold or a diagnosis. Other pollutant thresholds
-          are chosen by you. Each pollutant retains its own measurement unit.
+          The starting PM2.5 limit of 15 µg/m³ is a reference setting, not a medical limit. You choose the other limits. Each pollutant uses its own unit.
         </p>
       </div>
     </>
@@ -1541,11 +1518,10 @@ function App() {
   const renderEmail = () => (
     <div className="page-content">
       <section className="page-title">
-        <span className="eyebrow">AIR QUALITY NOTIFICATIONS</span>
-        <h1>Stay in the loop.</h1>
+        <span className="eyebrow">EMAIL ALERTS</span>
+        <h1>Get alerts about local readings</h1>
         <p>
-          Choose which station measurements you want AirMesh to monitor
-          and receive a daily email when your selected limits are exceeded.
+          Choose the readings you want to track. AirMesh checks them once a day and emails you when a selected limit is exceeded.
         </p>
       </section>
 
@@ -1557,10 +1533,10 @@ function App() {
             </span>
 
             <div>
-              <span className="eyebrow">SECURE SETTINGS LINK</span>
-              <h2>Manage your notifications.</h2>
+              <span className="eyebrow">SETTINGS LINK</span>
+              <h2>Update your email alerts</h2>
               <p>
-                Update your profile, thresholds or notification status.
+                Change your alert choices or pause notifications.
               </p>
             </div>
           </div>
@@ -1568,19 +1544,19 @@ function App() {
           {manageLoading ? (
             <div className="notice-card">
               <RefreshCw size={18} className="spin" />
-              Loading your saved preferences...
+              Loading your saved settings...
             </div>
           ) : manageError && !manageStatus ? (
             <div className="notice-card error-card">
               <AlertCircle size={18} />
               <div>
-                <strong>Settings link unavailable</strong>
+                <strong>This settings link is not available</strong>
                 <p>{manageError}</p>
                 <button
                   className="text-button"
                   onClick={closeManageSettings}
                 >
-                  Return to email alerts
+                  Back to email alerts
                 </button>
               </div>
             </div>
@@ -1631,10 +1607,9 @@ function App() {
             </span>
 
             <div>
-              <strong>One scheduled check each day</strong>
+              <strong>One check each day</strong>
               <p>
-                AirMesh checks the latest eligible station readings once daily,
-                approximately around 9 AM IST. This is not an instant warning service.
+                AirMesh checks recent station readings once a day, around 9 AM IST. It does not send instant alerts.
               </p>
             </div>
           </div>
@@ -1646,35 +1621,33 @@ function App() {
               </div>
 
               <span className="eyebrow">
-                PERSONAL AIR QUALITY UPDATES
+                AIR QUALITY EMAILS
               </span>
 
-              <h2>Choose what matters to you.</h2>
+              <h2>Choose the readings you want to track</h2>
 
               <p>
-                Select a notification profile and the pollutant measurements
-                you want to follow. Your email must be verified before alerts
-                can be activated.
+                Choose an alert profile and the pollutants you want to track. Verify your email address before alerts can start.
               </p>
 
               <div className="email-benefit">
                 <CheckCircle2 size={17} />
-                Email verification before activation
+                Verify your email before alerts start
               </div>
 
               <div className="email-benefit">
                 <ShieldCheck size={17} />
-                Secure link for changing preferences
+                Use a secure link to change your settings
               </div>
 
               <div className="email-benefit">
                 <Clock size={17} />
-                Daily scheduled threshold checks
+                Daily checks against your limits
               </div>
 
               <div className="email-benefit">
                 <Info size={17} />
-                No medical diagnosis or symptom prediction
+                Alerts are not medical advice
               </div>
             </div>
 
@@ -1683,7 +1656,7 @@ function App() {
               onSubmit={handleSubscribe}
             >
               <span className="eyebrow">
-                CREATE YOUR SUBSCRIPTION
+                SIGN UP FOR EMAIL ALERTS
               </span>
 
               <label htmlFor="subscriber-email">
@@ -1703,7 +1676,7 @@ function App() {
               <div className="alert-form-divider" />
 
               <span className="eyebrow">
-                YOUR NOTIFICATION PREFERENCES
+                ALERT SETTINGS
               </span>
 
               {renderProfileControls()}
@@ -1714,8 +1687,8 @@ function App() {
                 disabled={subscribeLoading}
               >
                 {subscribeLoading
-                  ? 'Sending confirmation...'
-                  : 'Subscribe and verify'}
+                  ? 'Sending confirmation email...'
+                  : 'Sign up and verify email'}
                 <ArrowUpRight size={16} />
               </button>
 
@@ -1726,19 +1699,17 @@ function App() {
               )}
 
               <small>
-                Submitting this form sends a confirmation email. Your
-                notification preferences are saved with your subscription.
+                We will email you a confirmation link. Your alert settings will be saved with your subscription.
               </small>
             </form>
           </div>
 
           <section className="alert-existing-panel">
             <div>
-              <span className="eyebrow">ALREADY SUBSCRIBED?</span>
-              <h2>Change your notification settings.</h2>
+              <span className="eyebrow">ALREADY SIGNED UP?</span>
+              <h2>Change your alert settings</h2>
               <p>
-                Request a secure link to update your profile, thresholds,
-                or pause your notifications.
+                Enter your email address and we will send a secure link to change your settings or pause alerts.
               </p>
             </div>
 
@@ -1747,7 +1718,7 @@ function App() {
               onSubmit={handleRequestSettings}
             >
               <label htmlFor="settings-email">
-                Subscribed email address
+                Email address
               </label>
 
               <div className="alert-request-controls">
@@ -1784,17 +1755,15 @@ function App() {
           <div className="info-note">
             <Info size={18} />
             <p>
-              AirMesh currently monitors one station in Kadri, Mangaluru.
-              Alerts use fresh supported readings from that station only.
-              They do not represent every neighbourhood or indoor environment.
+              AirMesh currently checks readings from one station in Kadri, Mangaluru. Alerts are based on that station only and may not reflect other neighbourhoods or indoor air.
             </p>
           </div>
         </>
       )}
 
       <footer className="page-footer">
-        <span>AIRMESH / PERSONAL NOTIFICATIONS</span>
-        <span>DAILY CHECKS / KADRI STATION</span>
+        <span>AIRMESH / EMAIL ALERTS</span>
+        <span>DAILY CHECK / KADRI STATION</span>
       </footer>
     </div>
   );
@@ -1833,7 +1802,7 @@ function App() {
           {sidebarOpen && (
             <button
               className="mobile-scrim"
-              aria-label="Close navigation"
+              aria-label="Close menu"
               onClick={() => setSidebarOpen(false)}
             />
           )}
@@ -1860,12 +1829,12 @@ function App() {
             </div>
 
             <div className="brand-caption">
-              ENVIRONMENTAL INTELLIGENCE
+              AIR QUALITY MONITORING
             </div>
 
             <div className="side-divider" />
 
-            <div className="side-label">YOUR LOCATION</div>
+            <div className="side-label">LOCATION</div>
 
             <div className="workspace-chip">
               <span className="workspace-dot" />
@@ -1909,9 +1878,9 @@ function App() {
               </div>
 
               <div className="side-foot">
-                AIR QUALITY IS LOCAL.
+                AIR QUALITY VARIES BY LOCATION.
                 <br />
-                KNOW YOUR ENVIRONMENT.
+                CHECK THE LOCAL READINGS.
               </div>
             </div>
           </aside>
@@ -1922,7 +1891,7 @@ function App() {
                 <button
                   className="mobile-menu"
                   onClick={() => setSidebarOpen(true)}
-                  aria-label="Open navigation"
+                  aria-label="Open menu"
                 >
                   <Menu size={19} />
                 </button>
@@ -1946,8 +1915,8 @@ function App() {
                   className="icon-action"
                   onClick={fetchData}
                   disabled={refreshing}
-                  title="Refresh sensor data"
-                  aria-label="Refresh sensor data"
+                  title="Refresh station data"
+                  aria-label="Refresh station data"
                 >
                   <RefreshCw
                     size={16}
