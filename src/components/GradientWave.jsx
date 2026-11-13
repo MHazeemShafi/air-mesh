@@ -578,8 +578,13 @@ void main() {
   }
 }
 
+const DEFAULT_COLORS = Object.freeze([
+  "#10243A", "#244B6A", "#6FAED2",
+  "#193B59", "#A9D3E8", "#142B43"
+]);
+
 export default function GradientWave({
-  colors = ["#10243A", "#244B6A", "#6FAED2", "#193B59", "#A9D3E8", "#142B43"],
+  colors = DEFAULT_COLORS,
   isPlaying = true,
   className = "",
 }) {
