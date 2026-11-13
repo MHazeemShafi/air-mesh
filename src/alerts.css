@@ -17,8 +17,6 @@
   --alert-error: #B65E62;
 }
 
-/* Main panels */
-
 .alert-frequency-banner,
 .alert-existing-panel,
 .alert-manage-panel {
@@ -63,8 +61,6 @@
   margin: 6px 0 0;
 }
 
-/* Subscription form */
-
 .alert-subscribe-form {
   display: flex;
   flex-direction: column;
@@ -76,8 +72,6 @@
   background: var(--alert-border);
   margin: 12px 0;
 }
-
-/* Profile selection */
 
 .alert-profile-options {
   display: grid;
@@ -149,8 +143,6 @@
   line-height: 1.5;
 }
 
-/* Enable notifications */
-
 .alert-enable-row {
   display: flex;
   align-items: center;
@@ -180,8 +172,6 @@
   font-size: 11px;
   line-height: 1.5;
 }
-
-/* Toggle switch */
 
 .alert-switch {
   position: relative;
@@ -232,8 +222,6 @@
   outline-offset: 3px;
 }
 
-/* Threshold heading */
-
 .alert-threshold-heading {
   margin: 18px 0 10px;
 }
@@ -251,8 +239,6 @@
 .alert-threshold-heading small {
   font-size: 10px;
 }
-
-/* Threshold checklist */
 
 .alert-threshold-list {
   display: grid;
@@ -359,8 +345,6 @@
   white-space: nowrap;
 }
 
-/* Information note */
-
 .alert-info-note {
   margin-top: 14px;
   padding: 11px 13px;
@@ -373,8 +357,6 @@
   font-size: 11px;
   line-height: 1.55;
 }
-
-/* Buttons */
 
 .alert-save-button {
   min-height: 42px;
@@ -400,8 +382,6 @@
   border-color: #91B7D0;
 }
 
-/* Manage alert settings */
-
 .alert-manage-panel {
   max-width: 900px;
 }
@@ -425,8 +405,6 @@
   display: grid;
   gap: 14px;
 }
-
-/* Existing subscriber panel */
 
 .alert-existing-panel {
   display: grid;
@@ -475,8 +453,6 @@
   white-space: nowrap;
 }
 
-/* Success and error messages */
-
 .success-message {
   color: var(--alert-success);
 }
@@ -484,8 +460,6 @@
 .error-message {
   color: var(--alert-error);
 }
-
-/* Tablet */
 
 @media (max-width: 900px) {
   .alert-profile-options {
@@ -497,8 +471,6 @@
     min-height: 76px;
   }
 }
-
-/* Mobile */
 
 @media (max-width: 600px) {
   .alert-existing-panel {
@@ -558,8 +530,6 @@
     width: 100%;
   }
 }
-
-/* Accessibility */
 
 @media (prefers-reduced-motion: reduce) {
   .alert-profile-option,
