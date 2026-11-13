@@ -170,7 +170,7 @@ function findExceededThresholds(preference, readings) {
         value: reading.value,
         threshold: thresholdValue,
         unit: reading.unit,
-        timestamp: reading.timestamp
+        timestamp: reading.time
       });
     }
   }
@@ -393,7 +393,7 @@ export default async function handler(req, res) {
           htmlContent: buildEmailHtml(exceeded)
         });
 
-        // Record the date only after Resend accepts the email.
+        // Record the date only after Brevo accepts the email.
         const { error: updateError } = await supabase
           .from('air_alert_preferences')
           .update({
