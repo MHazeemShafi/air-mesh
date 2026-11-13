@@ -563,3 +563,40 @@
 .alert-secondary-button {
   transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
 }
+
+
+/* Keep threshold labels readable against the light alert panels. */
+.alert-threshold-heading,
+.alert-threshold-heading strong,
+.alert-threshold-heading small,
+.alert-threshold-row,
+.alert-pollutant-choice,
+.alert-pollutant-choice strong,
+.alert-pollutant-choice small,
+.alert-threshold-input span {
+  color: #1D2930 !important;
+}
+
+.alert-threshold-heading small,
+.alert-pollutant-choice small,
+.alert-threshold-input span {
+  color: #59696E !important;
+}
+
+.alert-threshold-input input {
+  color: #1D2930 !important;
+  background: #FFFFFF !important;
+  border-color: #C8D4D0 !important;
+  -webkit-text-fill-color: #1D2930;
+}
+
+.alert-threshold-input input::placeholder {
+  color: #78878A !important;
+  opacity: 1;
+}
+
+.alert-threshold-input input:disabled {
+  color: #59696E !important;
+  -webkit-text-fill-color: #59696E;
+  opacity: .7;
+}
