@@ -11,7 +11,6 @@ import {
   Thermometer, Wind, X, Save, Bell, Settings
 } from 'lucide-react';
 
-import 'leaflet/dist/leaflet.css';
 import './alerts.css';
 
 const API_URL = '/api/air-quality';
