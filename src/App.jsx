@@ -176,8 +176,6 @@ function Accordion({ title, subtitle, children, defaultOpen = false }) {
   );
 }
 
-/* MAP COMPONENT */
-
 function MapView() {
   const element = useRef(null);
   const mapRef = useRef(null);
@@ -272,8 +270,6 @@ function MapView() {
   );
 }
 
-/* MAIN APPLICATION */
-
 function App() {
   const [stationData, setStationData] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -340,8 +336,6 @@ function App() {
   const sensorAge = getAge(latestReading?.time);
   const freshness = getFreshness(sensorAge);
 
-  /* API DATA */
-
   const fetchData = async () => {
     if (requestRef.current) return;
 
@@ -390,8 +384,6 @@ function App() {
 
     return () => clearInterval(timer);
   }, []);
-
-  /* LOAD SAVED EMAIL SETTINGS */
 
   useEffect(() => {
     if (!manageToken) return;
@@ -474,8 +466,6 @@ function App() {
       cancelled = true;
     };
   }, [manageToken]);
-
-  /* EMAIL PREFERENCES */
 
   const buildPreferences = () => {
     const cleanThresholds = {};
@@ -689,8 +679,6 @@ function App() {
     });
   };
 
-  /* READING GRID */
-
   const renderPollutantGrid = items => (
     <div className="pollutant-grid">
       {items.map(item => {
@@ -721,8 +709,6 @@ function App() {
       })}
     </div>
   );
-
-  /* OVERVIEW PAGE */
 
   const renderOverview = () => (
     <div className="page-content">
@@ -1061,8 +1047,6 @@ function App() {
     </div>
   );
 
-  /* POLLUTANTS PAGE */
-
   const renderPollutants = () => (
     <div className="page-content">
       <section className="page-title">
@@ -1125,8 +1109,6 @@ function App() {
       </div>
     </div>
   );
-
-  /* STATION PAGE */
 
   const renderStation = () => (
     <div className="page-content">
@@ -1228,8 +1210,6 @@ function App() {
       </section>
     </div>
   );
-
-  /* HEALTH GUIDANCE PAGE */
 
   const renderGuidance = () => (
     <div className="page-content">
@@ -1359,8 +1339,6 @@ function App() {
     </div>
   );
 
-  /* EMAIL ALERT THRESHOLDS */
-
   const renderThresholdFields = () => (
     <div className="alert-threshold-list">
       {POLLUTANTS.map(item => {
@@ -1406,8 +1384,6 @@ function App() {
       })}
     </div>
   );
-
-  /* EMAIL PROFILE CONTROLS */
 
   const renderProfileControls = () => (
     <>
@@ -1511,8 +1487,6 @@ function App() {
       </div>
     </>
   );
-
-  /* EMAIL ALERTS PAGE */
 
   const renderEmail = () => (
     <div className="page-content">
@@ -1767,8 +1741,6 @@ function App() {
     </div>
   );
 
-  /* PAGE ROUTING */
-
   const renderContent = () => {
     if (activeTab === 'Pollutants') {
       return renderPollutants();
@@ -1788,8 +1760,6 @@ function App() {
 
     return renderOverview();
   };
-
-  /* APPLICATION LAYOUT */
 
   return (
     <>
