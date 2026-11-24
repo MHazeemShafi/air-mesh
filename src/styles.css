@@ -1,14 +1,16 @@
 /* ==============================================================================
-   AIRMESH — SWISS NEO-BRUTALIST × ATMOSPHERIC BLUE DESIGN SYSTEM
-   Grid Discipline · Oversized Grotesque Typography · Sharp Geometry · Flat Surfaces
+   AIRMESH — SWISS NEO-BRUTALIST × ATMOSPHERIC BLUE TYPOGRAPHY & DESIGN SYSTEM
+   Primary Typeface: Geist · Secondary Typeface: IBM Plex Mono
+   Precision · Editorial Discipline · Oversized Telemetry · Restrained Monospace
    ============================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 :root {
-  /* Core Typography */
-  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  /* Typography System — Geist (Primary) + IBM Plex Mono (Secondary) */
+  --font-primary: 'Geist', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: var(--font-primary);
 
   /* Atmospheric Blue Palette */
   --ice-blue: #EAF4FB;
@@ -70,18 +72,19 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
+  font-weight: 400;
   color: var(--text-main);
   background-color: var(--bg);
   min-width: 320px;
   min-height: 100vh;
-  line-height: 1.5;
+  line-height: 1.55;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Atmospheric Dot Grid & Airflow Overlay */
+/* Atmospheric Dot Grid & Airflow Background */
 #root {
   position: relative;
   isolation: isolate;
@@ -185,6 +188,7 @@ body {
 .brand-symbol span:nth-child(3) { height: 14px; }
 
 .brand-name {
+  font-family: var(--font-primary);
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -256,7 +260,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
   font-size: 13.5px;
   font-weight: 600;
   color: var(--navy);
@@ -309,6 +313,7 @@ body {
 
 .demo-state b {
   display: block;
+  font-family: var(--font-primary);
   font-size: 12px;
   font-weight: 700;
   color: var(--navy);
@@ -317,7 +322,7 @@ body {
 .demo-state small {
   display: block;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--text-muted);
 }
 
@@ -362,6 +367,8 @@ body {
 .breadcrumb b {
   margin: 0 8px;
   color: var(--navy);
+  font-family: var(--font-primary);
+  font-weight: 700;
 }
 
 .topbar-actions {
@@ -415,7 +422,7 @@ body {
   box-shadow: 1px 1px 0px var(--navy);
 }
 
-/* HERO SECTION — PM2.5 FOCAL POINT */
+/* HERO SECTION — OVERSIZED PM2.5 DOMINANCE */
 
 .hero {
   background: var(--white);
@@ -498,6 +505,7 @@ body {
 }
 
 .hero-copy h1 {
+  font-family: var(--font-primary);
   font-size: clamp(2.4rem, 4.5vw, 3.6rem);
   font-weight: 800;
   line-height: 1.05;
@@ -512,7 +520,9 @@ body {
 }
 
 .hero-copy p {
+  font-family: var(--font-primary);
   font-size: 15px;
+  font-weight: 450;
   line-height: 1.6;
   color: var(--text-muted);
   max-width: 480px;
@@ -528,9 +538,9 @@ body {
   color: var(--white);
   border: 1.5px solid var(--navy);
   box-shadow: 3px 3px 0px var(--navy);
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -543,7 +553,7 @@ body {
   box-shadow: 4px 4px 0px var(--navy);
 }
 
-/* OVERSIZED PM2.5 READING BOX */
+/* OVERSIZED PM2.5 READING — GEIST NUMBER WITH MONO UNIT */
 
 .hero-reading {
   padding: 36px 32px;
@@ -573,8 +583,8 @@ body {
 }
 
 .hero-reading-number {
-  font-family: var(--font-mono);
-  font-size: clamp(4rem, 8vw, 6.5rem);
+  font-family: var(--font-primary);
+  font-size: clamp(4.2rem, 8.5vw, 6.8rem);
   font-weight: 800;
   line-height: 0.9;
   letter-spacing: -0.05em;
@@ -586,7 +596,8 @@ body {
 }
 
 .hero-reading-number span {
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  font-family: var(--font-mono);
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
   font-weight: 500;
   color: var(--cobalt);
   letter-spacing: 0;
@@ -712,13 +723,15 @@ body {
 
 .quick-stat div strong {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-primary);
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   color: var(--navy);
 }
 
 .quick-stat .stat-time {
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.3;
@@ -755,14 +768,17 @@ body {
 }
 
 .section-heading h2 {
+  font-family: var(--font-primary);
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 750;
   letter-spacing: -0.03em;
   color: var(--navy);
 }
 
 .section-heading p {
+  font-family: var(--font-primary);
   font-size: 14px;
+  font-weight: 450;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -793,8 +809,9 @@ body {
 }
 
 .measurement-feature-top h3 {
+  font-family: var(--font-primary);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 750;
   color: var(--navy);
   letter-spacing: -0.02em;
 }
@@ -811,9 +828,10 @@ body {
 }
 
 .measurement-number {
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
   font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 800;
+  letter-spacing: -0.04em;
   color: var(--navy);
   margin: 10px 0;
   display: flex;
@@ -822,6 +840,7 @@ body {
 }
 
 .measurement-number span {
+  font-family: var(--font-mono);
   font-size: 16px;
   font-weight: 500;
   color: var(--cobalt);
@@ -878,6 +897,7 @@ body {
 
 .pollutant-copy strong {
   display: block;
+  font-family: var(--font-primary);
   font-size: 14px;
   font-weight: 700;
   color: var(--navy);
@@ -885,25 +905,30 @@ body {
 
 .pollutant-copy small {
   display: block;
-  font-size: 11.5px;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 450;
   color: var(--text-muted);
 }
 
 .pollutant-value {
   text-align: right;
-  font-family: var(--font-mono);
 }
 
 .pollutant-value strong {
   display: block;
-  font-size: 18px;
-  font-weight: 700;
+  font-family: var(--font-primary);
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   color: var(--navy);
 }
 
 .pollutant-value small {
   display: block;
-  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   color: var(--cobalt);
 }
 
@@ -934,14 +959,17 @@ body {
 
 .accordion-trigger strong {
   display: block;
-  font-size: 14px;
+  font-family: var(--font-primary);
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--navy);
 }
 
 .accordion-trigger small {
   display: block;
+  font-family: var(--font-primary);
   font-size: 12px;
+  font-weight: 450;
   color: var(--text-muted);
 }
 
@@ -977,13 +1005,15 @@ body {
 
 .map-heading strong {
   display: block;
-  font-size: 14px;
+  font-family: var(--font-primary);
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--navy);
 }
 
 .map-heading small {
   display: block;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   color: var(--text-muted);
 }
@@ -1051,9 +1081,9 @@ body {
 
 .quality-grid div strong {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 18px;
-  font-weight: 700;
+  font-family: var(--font-primary);
+  font-size: 20px;
+  font-weight: 750;
   color: var(--navy);
 }
 
@@ -1083,7 +1113,7 @@ body {
   font-weight: 600;
 }
 
-/* BUTTONS & CONTROLS — NEO-BRUTALIST HARD PRESS */
+/* BUTTONS & CONTROLS — GEIST TYPOGRAPHY WITH HARD SHADOWS */
 
 .solid-button {
   display: inline-flex;
@@ -1095,9 +1125,9 @@ body {
   color: var(--white);
   border: 1.5px solid var(--navy);
   box-shadow: 3px 3px 0px var(--navy);
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -1124,9 +1154,9 @@ body {
   color: var(--navy);
   border: 1.5px solid var(--navy);
   box-shadow: 2px 2px 0px var(--navy);
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -1149,7 +1179,8 @@ body {
   border: none;
   color: var(--cobalt);
   text-decoration: underline;
-  font-weight: 700;
+  font-family: var(--font-primary);
+  font-weight: 650;
   cursor: pointer;
   padding: 0;
   margin-top: 6px;
@@ -1165,8 +1196,9 @@ body {
   padding: 16px 20px;
   background: var(--mist);
   border: 1.5px solid var(--navy);
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-family: var(--font-primary);
+  font-size: 13.5px;
+  font-weight: 500;
   color: var(--navy);
   margin-bottom: 20px;
 }
@@ -1185,9 +1217,11 @@ body {
   background: var(--ice-blue);
   border: 1px solid var(--navy);
   border-left: 4px solid var(--cobalt);
+  font-family: var(--font-primary);
   font-size: 13px;
+  font-weight: 450;
   color: var(--navy);
-  line-height: 1.5;
+  line-height: 1.55;
   margin-top: 20px;
 }
 
@@ -1227,14 +1261,18 @@ body {
 }
 
 .cta-panel h2 {
+  font-family: var(--font-primary);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   color: var(--navy);
   margin-bottom: 4px;
 }
 
 .cta-panel p {
+  font-family: var(--font-primary);
   font-size: 14px;
+  font-weight: 450;
   color: var(--text-muted);
 }
 
@@ -1262,6 +1300,7 @@ body {
 }
 
 .page-title h1 {
+  font-family: var(--font-primary);
   font-size: clamp(2.2rem, 4vw, 3.2rem);
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -1271,7 +1310,9 @@ body {
 }
 
 .page-title p {
+  font-family: var(--font-primary);
   font-size: 15px;
+  font-weight: 450;
   color: var(--text-muted);
   max-width: 640px;
   margin-top: 6px;
@@ -1293,16 +1334,18 @@ body {
 
 .measurement-summary div strong {
   display: block;
-  font-family: var(--font-mono);
-  font-size: 32px;
+  font-family: var(--font-primary);
+  font-size: 34px;
   font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--navy);
   line-height: 1.1;
   margin: 6px 0 4px;
 }
 
 .measurement-summary div .summary-time {
-  font-size: 20px;
+  font-family: var(--font-mono);
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -1341,8 +1384,10 @@ body {
 }
 
 .station-detail-card h2 {
+  font-family: var(--font-primary);
   font-size: 26px;
   font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--navy);
 }
 
@@ -1377,14 +1422,18 @@ body {
 }
 
 .guidance-intro h2 {
+  font-family: var(--font-primary);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   color: var(--navy);
   margin-bottom: 4px;
 }
 
 .guidance-intro p {
+  font-family: var(--font-primary);
   font-size: 14px;
+  font-weight: 450;
   color: var(--text-muted);
 }
 
@@ -1415,14 +1464,17 @@ body {
 }
 
 .guidance-card h3 {
+  font-family: var(--font-primary);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 750;
   color: var(--navy);
   margin-bottom: 8px;
 }
 
 .guidance-card p {
+  font-family: var(--font-primary);
   font-size: 13px;
+  font-weight: 450;
   line-height: 1.6;
   color: var(--text-muted);
 }
@@ -1446,13 +1498,14 @@ body {
 .guidance-list > div span {
   font-family: var(--font-mono);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--cobalt);
   min-width: 28px;
 }
 
 .guidance-list strong {
   display: block;
+  font-family: var(--font-primary);
   font-size: 14.5px;
   font-weight: 700;
   color: var(--navy);
@@ -1460,7 +1513,9 @@ body {
 }
 
 .guidance-list p {
+  font-family: var(--font-primary);
   font-size: 13px;
+  font-weight: 450;
   color: var(--text-muted);
 }
 
@@ -1592,6 +1647,7 @@ body {
     gap: 3px;
     background: none;
     border: none;
+    font-family: var(--font-primary);
     font-size: 10px;
     font-weight: 700;
     color: var(--text-muted);

@@ -1,6 +1,6 @@
 /* ==============================================================================
-   AIRMESH — ALERTS & SUBSCRIPTION (SWISS NEO-BRUTALIST × ATMOSPHERIC BLUE)
-   Sharp Rectangular Panels · Hard Offset Shadows · Monospace Units · Flat Geometry
+   AIRMESH — ALERTS & SUBSCRIPTION (GEIST + IBM PLEX MONO SYSTEM)
+   Primary Font: Geist · Technical Font: IBM Plex Mono
    ============================================================================== */
 
 :root {
@@ -55,8 +55,9 @@
 .alert-frequency-banner strong,
 .alert-existing-panel h2,
 .alert-panel-heading h2 {
+  font-family: var(--font-primary);
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 750;
   color: var(--alert-navy);
   letter-spacing: -0.02em;
 }
@@ -64,7 +65,9 @@
 .alert-frequency-banner p,
 .alert-existing-panel p,
 .alert-panel-heading p {
+  font-family: var(--font-primary);
   font-size: 13.5px;
+  font-weight: 450;
   color: var(--alert-muted);
   line-height: 1.6;
   margin-top: 4px;
@@ -89,6 +92,7 @@
 }
 
 .email-intro h2 {
+  font-family: var(--font-primary);
   font-size: clamp(1.8rem, 3.2vw, 2.4rem);
   font-weight: 800;
   color: var(--alert-navy);
@@ -99,7 +103,9 @@
 }
 
 .email-intro p {
+  font-family: var(--font-primary);
   font-size: 14px;
+  font-weight: 450;
   color: var(--alert-muted);
   line-height: 1.6;
   margin-bottom: 22px;
@@ -109,10 +115,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--alert-navy);
+  font-family: var(--font-primary);
+  font-size: 13px;
   font-weight: 500;
+  color: var(--alert-navy);
   padding: 8px 0;
   border-bottom: 1px solid var(--alert-border-subtle);
 }
@@ -136,7 +142,7 @@
 .alert-settings-request label {
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.08em;
   color: var(--alert-navy);
   text-transform: uppercase;
@@ -150,7 +156,7 @@
   padding: 12px 14px;
   background: var(--white);
   border: 1.5px solid var(--alert-navy);
-  font-family: var(--font-mono);
+  font-family: var(--font-primary);
   font-size: 14px;
   color: var(--ink);
   border-radius: var(--radius);
@@ -220,8 +226,9 @@
 
 .alert-profile-option strong {
   display: block;
-  font-size: 13px;
-  font-weight: 800;
+  font-family: var(--font-primary);
+  font-size: 13.5px;
+  font-weight: 750;
   color: var(--alert-navy);
   letter-spacing: -0.02em;
   margin-bottom: 4px;
@@ -229,7 +236,9 @@
 
 .alert-profile-option small {
   display: block;
-  font-size: 11px;
+  font-family: var(--font-primary);
+  font-size: 11.5px;
+  font-weight: 450;
   color: var(--alert-muted);
   line-height: 1.4;
 }
@@ -248,6 +257,7 @@
 
 .alert-enable-row strong {
   display: block;
+  font-family: var(--font-primary);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--alert-navy);
@@ -255,7 +265,9 @@
 
 .alert-enable-row small {
   display: block;
+  font-family: var(--font-primary);
   font-size: 11.5px;
+  font-weight: 450;
   color: var(--alert-muted);
 }
 
@@ -312,6 +324,7 @@
 
 .alert-threshold-heading strong {
   display: block;
+  font-family: var(--font-primary);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--alert-navy);
@@ -319,7 +332,9 @@
 
 .alert-threshold-heading small {
   display: block;
+  font-family: var(--font-primary);
   font-size: 11.5px;
+  font-weight: 450;
   color: var(--alert-muted);
 }
 
@@ -361,14 +376,17 @@
 
 .alert-pollutant-choice strong {
   display: block;
-  font-size: 13px;
+  font-family: var(--font-primary);
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--alert-navy);
 }
 
 .alert-pollutant-choice small {
   display: block;
-  font-size: 11px;
+  font-family: var(--font-primary);
+  font-size: 11.5px;
+  font-weight: 450;
   color: var(--alert-muted);
 }
 
@@ -385,7 +403,7 @@
   border: 1.5px solid var(--alert-navy);
   font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--alert-navy);
   text-align: right;
 }
@@ -405,7 +423,7 @@
 .alert-threshold-input span {
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--alert-blue);
   min-width: 36px;
 }
@@ -427,9 +445,9 @@
   color: var(--alert-navy);
   border: 1.5px solid var(--alert-navy);
   box-shadow: 2px 2px 0px var(--alert-navy);
-  font-family: var(--font-sans);
+  font-family: var(--font-primary);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -470,7 +488,7 @@
 .form-message {
   font-family: var(--font-mono);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 8px 12px;
   margin-top: 8px;
   border: 1px solid var(--alert-navy);
