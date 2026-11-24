@@ -18,38 +18,88 @@ const SUGGESTED_QUESTIONS = [
   'How do I set up email alerts?'
 ];
 
+const API_ERROR_MESSAGES = {
+  AI_NOT_CONFIGURED:
+    'AirMesh Assistant is not configured yet. Please contact the site administrator.',
+  AI_INVALID_API_KEY:
+    'AirMesh Assistant has a server authentication problem. Please contact the site administrator.',
+  AI_ACCESS_DENIED:
+    'AirMesh Assistant cannot access its AI service right now. Please try again later.',
+  APP_RATE_LIMITED:
+    'You’ve sent several messages quickly. Please wait a minute and try again.',
+  AI_PROVIDER_RATE_LIMITED:
+    'The AI service is busy right now. Please wait a moment and try again.',
+  AI_MODEL_UNAVAILABLE:
+    'The assistant model is temporarily unavailable. Please try again later.',
+  AI_TIMEOUT:
+    'AirMesh Assistant took too long to respond. Please try again.',
+  AI_PROVIDER_UNAVAILABLE:
+    'Could not reach the AI service. Please try again shortly.',
+  AI_SERVER_ERROR:
+    'AirMesh Assistant encountered a server error. Please try again later.'
+};
+
+function getHttpErrorMessage(status, code) {
+  if (API_ERROR_MESSAGES[code]) return API_ERROR_MESSAGES[code];
+  if (status === 404 || status === 405) {
+    return 'AirMesh Assistant is unavailable at this address. Please refresh the page.';
+  }
+  if (status === 429) {
+    return 'Too many requests. Please wait a minute and try again.';
+  }
+  if (status === 502 || status === 503) {
+    return 'AirMesh Assistant is temporarily unavailable. Please try again shortly.';
+  }
+  if (status >= 500) {
+    return 'AirMesh Assistant encountered a server error. Please try again later.';
+  }
+  return 'Unable to send your message. Please check it and try again.';
+}
+
 async function sendMessage(chatHistory, pageContext) {
-  const response = await fetch('/api/ai-assistant', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      messages: chatHistory,
-      pageContext
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 25_000);
+  let response;
+  try {
+    response = await fetch('/api/ai-assistant', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        messages: chatHistory,
+        pageContext
+      }),
+      signal: controller.signal
+    });
+  } catch (requestError) {
+    if (requestError.name === 'AbortError') {
+      throw new Error('AirMesh Assistant timed out. Please try again.');
+    }
+    if (requestError instanceof TypeError) {
+      throw new Error('Network connection failed. Check your connection and try again.');
+    }
+    throw new Error('AirMesh Assistant could not be reached. Please try again.');
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 
   let data;
   try {
     data = await response.json();
   } catch {
-    throw new Error('AirMesh Assistant returned an invalid response.');
+    throw new Error(getHttpErrorMessage(response.status));
   }
 
   if (!data || typeof data !== 'object') {
-    throw new Error('AirMesh Assistant returned an invalid response.');
+    throw new Error(getHttpErrorMessage(response.status));
   }
   if (!response.ok) {
-    throw new Error(
-      typeof data.error === 'string' && data.error
-        ? data.error
-        : 'Unable to contact AirMesh Assistant.'
-    );
+    throw new Error(getHttpErrorMessage(response.status, data.code));
   }
   if (typeof data.answer !== 'string' || !data.answer.trim()) {
-    throw new Error('AirMesh Assistant returned an empty response.');
+    throw new Error('AirMesh Assistant returned an invalid response.');
   }
 
   return data.answer;

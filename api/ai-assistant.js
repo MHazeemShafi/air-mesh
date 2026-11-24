@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { APIConnectionError, APIConnectionTimeoutError } from 'groq-sdk';
 import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const SYSTEM_PROMPT = `
@@ -50,6 +51,8 @@ RULES:
 
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_LENGTH = 2000;
+const GROQ_MODEL = 'openai/gpt-oss-120b';
+const GROQ_TIMEOUT_MS = 20_000;
 const LIVE_QUESTION_PATTERNS = [
   /\b(?:current(?:ly)?|right now|today(?:'|’)s?|latest|live|real[ -]time)\b/i,
   /\b(?:safe|go outside|outside|outdoors?|exercise)\b/i,
@@ -152,6 +155,82 @@ function getUnavailableLiveContext() {
   };
 }
 
+function getGroqFailure(error) {
+  const status = Number.isInteger(error?.status) ? error.status : null;
+  const providerError = error?.error?.error ?? error?.error;
+  const providerCode = typeof providerError?.code === 'string'
+    ? providerError.code
+    : null;
+  const providerType = typeof providerError?.type === 'string'
+    ? providerError.type
+    : null;
+  const providerMessage = typeof providerError?.message === 'string'
+    ? providerError.message
+    : '';
+  const modelFailure = /model.*(?:decommission|not found|not exist|unsupported|unavailable|not available)|(?:decommission|not found|not exist|unsupported|unavailable|not available).*model/i
+    .test(`${providerCode || ''} ${providerMessage}`);
+
+  let failure;
+  if (
+    status === 408 ||
+    error instanceof APIConnectionTimeoutError ||
+    error?.name === 'AbortError'
+  ) {
+    failure = {
+      status: 504,
+      code: 'AI_TIMEOUT',
+      error: 'The AI service took too long to respond. Please try again.'
+    };
+  } else if (status === 401) {
+    failure = {
+      status: 502,
+      code: 'AI_INVALID_API_KEY',
+      error: 'AirMesh Assistant has an API authentication configuration problem. Please contact the site administrator.'
+    };
+  } else if (status === 403) {
+    failure = {
+      status: 502,
+      code: 'AI_ACCESS_DENIED',
+      error: 'AirMesh Assistant cannot access its AI service. Please contact the site administrator.'
+    };
+  } else if (status === 429) {
+    failure = {
+      status: 503,
+      code: 'AI_PROVIDER_RATE_LIMITED',
+      error: 'The AI service is busy right now. Please wait a moment and try again.'
+    };
+  } else if ((status === 400 || status === 404) && modelFailure) {
+    failure = {
+      status: 503,
+      code: 'AI_MODEL_UNAVAILABLE',
+      error: 'The assistant model is temporarily unavailable. Please try again later.'
+    };
+  } else if (status >= 500 || error instanceof APIConnectionError) {
+    failure = {
+      status: 502,
+      code: 'AI_PROVIDER_UNAVAILABLE',
+      error: 'The AI service is temporarily unreachable. Please try again soon.'
+    };
+  } else {
+    failure = {
+      status: 500,
+      code: 'AI_SERVER_ERROR',
+      error: 'The assistant encountered a server error. Please try again later.'
+    };
+  }
+
+  console.error('AirMesh AI provider failure', {
+    status,
+    code: providerCode,
+    type: providerType,
+    errorName: typeof error?.constructor?.name === 'string'
+      ? error.constructor.name
+      : 'UnknownError'
+  });
+
+  return failure;
+}
+
 async function getAirQualityContextIfNeeded(question, clientIp) {
   if (!isLiveQuestion(question)) return null;
 
@@ -224,16 +303,45 @@ export default async function handler(req, res) {
 
   const ip = getClientIp(req);
   if (!checkRateLimit(`ai-assistant:${ip}`, 10, 60 * 1000)) {
-    return res.status(429).json({ error: 'Too many requests' });
+    return res.status(429).json({
+      code: 'APP_RATE_LIMITED',
+      error: 'Too many assistant requests. Please wait a minute and try again.'
+    });
   }
 
-  if (!process.env.GROQ_API_KEY) {
-    return res.status(500).json({ error: 'AI service is not configured' });
+  const apiKey = process.env.GROQ_API_KEY?.trim();
+  if (!apiKey) {
+    return res.status(503).json({
+      code: 'AI_NOT_CONFIGURED',
+      error: 'AirMesh Assistant is not configured. Please contact the site administrator.'
+    });
   }
 
-  const { messages, pageContext } = req.body || {};
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return res.status(400).json({
+        code: 'INVALID_JSON',
+        error: 'The request body must be valid JSON.'
+      });
+    }
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({
+      code: 'INVALID_REQUEST',
+      error: 'A JSON request body is required.'
+    });
+  }
+
+  const { messages, pageContext } = body;
   if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({ error: 'Messages are required' });
+    return res.status(400).json({
+      code: 'INVALID_MESSAGES',
+      error: 'Messages are required.'
+    });
   }
 
   const validMessages = messages
@@ -251,7 +359,8 @@ export default async function handler(req, res) {
 
   if (validMessages.at(-1)?.role !== 'user') {
     return res.status(400).json({
-      error: 'A valid user message is required'
+      code: 'INVALID_MESSAGES',
+      error: 'A valid user message is required.'
     });
   }
 
@@ -260,9 +369,13 @@ export default async function handler(req, res) {
       validMessages.at(-1).content,
       ip
     );
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const groq = new Groq({
+      apiKey,
+      timeout: GROQ_TIMEOUT_MS,
+      maxRetries: 0
+    });
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...(liveContext
@@ -291,10 +404,11 @@ export default async function handler(req, res) {
       "I couldn't generate a response. Please try again.";
 
     return res.status(200).json({ answer });
-  } catch {
-    console.error('AirMesh AI request failed');
-    return res.status(500).json({
-      error: 'The assistant is temporarily unavailable.'
+  } catch (error) {
+    const failure = getGroqFailure(error);
+    return res.status(failure.status).json({
+      code: failure.code,
+      error: failure.error
     });
   }
 }

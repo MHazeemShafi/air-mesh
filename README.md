@@ -5,7 +5,6 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Brevo](https://img.shields.io/badge/Brevo-Email_API-0B996E)](https://www.brevo.com/)
 [![OpenAQ](https://img.shields.io/badge/OpenAQ-v3_CPCB_Data-4A90E2)](https://openaq.org/)
-[![Tests](https://img.shields.io/badge/Tests-Passing_100%25-brightgreen)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **AirMesh** is a full-stack environmental monitoring web application and personalized notification engine. It pulls real-world continuous air pollution measurements from the **Central Pollution Control Board (CPCB)** monitoring station in **Kadri, Mangaluru** via the OpenAQ API, verifies sensor freshness and data integrity, and delivers scheduled daily email alerts to residents when pollutant concentrations exceed their custom respiratory health thresholds.
@@ -92,7 +91,6 @@ flowchart TD
 | **AI Assistant** | Groq SDK | Server-side AirMesh Q&A and contextual readings |
 | **Data Provider** | OpenAQ API v3 | Central Pollution Control Board (CPCB) feed |
 | **Hosting & CI/CD** | Vercel | Production hosting with automated crons |
-| **Testing** | Node.js Test Runner (`node:test`) | Unit tests for data, alert logic & security |
 
 ---
 
@@ -133,12 +131,6 @@ air-mesh/
 │   └── styles.css                   # Core application styles
 ├── supabase/
 │   └── schema.sql                   # Full PostgreSQL DDL, indexes & RLS policies
-├── tests/                           # Automated test suite
-│   ├── air-quality.test.js          # Telemetry validation & filtering tests
-│   ├── ai-assistant.test.js         # Assistant API and live-context tests
-│   ├── alert-logic.test.js          # Threshold evaluation & date logic tests
-│   ├── formatters.test.js           # UI formatting & freshness helper tests
-│   └── security.test.js             # Token hashing, XSS escaping & auth tests
 ├── .env.example                     # Environment variables template
 ├── index.html                       # HTML5 template with SEO meta tags
 ├── package.json                     # Dependencies & scripts
@@ -197,14 +189,7 @@ CLI on `http://localhost:3000` for local serverless API testing.
 3. Paste the contents of `supabase/schema.sql` and click **Run**.
 4. Both `email_subscribers` and `air_alert_preferences` tables will be created with primary keys, indexes, triggers, and Row Level Security.
 
-### 5. Run Automated Tests
-Execute the automated test suite:
-```bash
-npm test
-```
-Tests run with Node's native test runner and typically complete within a few seconds.
-
-### 6. Start Development Server
+### 5. Start Development Server
 ```bash
 npm run dev
 ```
