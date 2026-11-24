@@ -1,6 +1,6 @@
 .ai-helper {
   position: fixed;
-  z-index: 120;
+  z-index: 39;
   right: 24px;
   bottom: 24px;
   display: flex;
@@ -69,8 +69,8 @@
   flex-direction: column;
   width: 372px;
   max-width: calc(100vw - 32px);
-  max-height: min(660px, calc(100dvh - 112px));
-  min-height: min(360px, calc(100dvh - 112px));
+  max-height: min(560px, calc(100dvh - 160px));
+  min-height: min(360px, calc(100dvh - 160px));
   overflow: hidden;
   border: 1.5px solid var(--navy);
   border-radius: 14px;
@@ -433,8 +433,8 @@
   .ai-helper-panel {
     width: min(372px, calc(100vw - 40px));
     max-width: calc(100vw - 40px);
-    max-height: calc(100dvh - 164px - env(safe-area-inset-bottom, 0px));
-    min-height: min(360px, calc(100dvh - 164px));
+    max-height: min(560px, calc(100dvh - 216px - env(safe-area-inset-bottom, 0px)));
+    min-height: min(360px, calc(100dvh - 216px - env(safe-area-inset-bottom, 0px)));
   }
 
   .ai-helper-pill {

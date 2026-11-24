@@ -1032,6 +1032,8 @@ body {
 }
 
 .map-canvas {
+  isolation: isolate;
+  overflow: hidden;
   height: 380px;
   width: 100%;
   background: var(--sky-blue-light);
