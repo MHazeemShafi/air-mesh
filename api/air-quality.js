@@ -1,8 +1,16 @@
+import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed",
+    });
+  }
+
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`air-quality:${ip}`, 30, 60 * 1000)) {
+    return res.status(429).json({
+      error: "Rate limit exceeded. Please wait a minute before requesting data again.",
     });
   }
 
@@ -142,6 +150,9 @@ export default async function handler(req, res) {
     readings.sort(
       (a, b) => Date.parse(b.time) - Date.parse(a.time)
     );
+
+    // Set serverless cache headers (2 min fresh, up to 5 min stale revalidate)
+    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate=300');
 
     return res.status(200).json({
       station: location.name ?? "Kadri, Mangalore - KSPCB",

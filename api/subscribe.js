@@ -1,13 +1,7 @@
-﻿import { createHash, randomBytes } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { createHash, randomBytes } from 'node:crypto';
+import { getSupabase } from './_supabase.js';
+import { getResend } from './_resend.js';
+import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const ALLOWED_POLLUTANTS = [
   'pm25', 'pm10', 'o3', 'no2',
@@ -75,7 +69,17 @@ export default async function handler(req, res) {
     });
   }
 
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`subscribe:${ip}`, 5, 60 * 1000)) {
+    return res.status(429).json({
+      error: 'Too many subscription attempts. Please wait a minute before trying again.'
+    });
+  }
+
   try {
+    const supabase = getSupabase();
+    const resend = getResend();
+
     const email = String(req.body?.email || '')
       .trim()
       .toLowerCase();
@@ -90,13 +94,13 @@ export default async function handler(req, res) {
     }
 
     const preferences = cleanPreferences(
-      req.body?.preferences
+      req.body?.preferences || req.body
     );
 
     const { data: existing, error: lookupError } =
       await supabase
         .from('email_subscribers')
-        .select('id,is_verified,is_active')
+        .select('id,is_verified,is_active,verification_expires_at')
         .ilike('email', email)
         .maybeSingle();
 
@@ -130,7 +134,8 @@ export default async function handler(req, res) {
           is_active: true,
           is_verified: false,
           verification_token_hash: tokenHash,
-          verification_expires_at: expiry
+          verification_expires_at: expiry,
+          updated_at: new Date().toISOString()
         })
         .eq('id', existing.id)
         .select('id')
@@ -147,7 +152,9 @@ export default async function handler(req, res) {
           is_active: true,
           is_verified: false,
           verification_token_hash: tokenHash,
-          verification_expires_at: expiry
+          verification_expires_at: expiry,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select('id')
         .single();
@@ -175,11 +182,10 @@ export default async function handler(req, res) {
 
     if (
       !process.env.APP_URL ||
-      !process.env.RESEND_FROM_EMAIL ||
-      !process.env.RESEND_API_KEY
+      !process.env.RESEND_FROM_EMAIL
     ) {
       throw new Error(
-        'Email service configuration is incomplete.'
+        'Email service configuration is incomplete (APP_URL or RESEND_FROM_EMAIL).'
       );
     }
 
@@ -215,7 +221,8 @@ export default async function handler(req, res) {
                 color:white;
                 padding:12px 18px;
                 border-radius:6px;
-                text-decoration:none
+                text-decoration:none;
+                font-weight:600
               ">
                 Verify email
               </a>

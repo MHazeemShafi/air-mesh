@@ -1,19 +1,11 @@
-
-import { timingSafeEqual } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { getSupabase } from './_supabase.js';
+import { getResend } from './_resend.js';
 
 const MAX_READING_AGE_MS = 24 * 60 * 60 * 1000;
 const FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
 
-const ALLOWED_UNITS = {
+export const ALLOWED_UNITS = {
   pm25: 'µg/m³',
   pm10: 'µg/m³',
   o3: 'µg/m³',
@@ -24,7 +16,7 @@ const ALLOWED_UNITS = {
   nox: 'ppb'
 };
 
-function getIndiaDate() {
+export function getIndiaDate() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric',
@@ -39,9 +31,14 @@ function getIndiaDate() {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function authenticateCron(req) {
+export function generateUnsubscribeSignature(subscriberId) {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.CRON_SECRET || 'airmesh-secret';
+  return createHmac('sha256', secret).update(String(subscriberId)).digest('hex');
+}
+
+export function authenticateCron(req) {
   const secret = process.env.CRON_SECRET;
-  const authorization = req.headers.authorization || '';
+  const authorization = req.headers?.authorization || '';
 
   if (!secret || !authorization.startsWith('Bearer ')) {
     return false;
@@ -59,7 +56,7 @@ function authenticateCron(req) {
   );
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, character => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -69,7 +66,7 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function formatMeasurementTime(timestamp) {
+export function formatMeasurementTime(timestamp) {
   return new Intl.DateTimeFormat('en-IN', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -77,7 +74,7 @@ function formatMeasurementTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
-function getCurrentReadings(payload) {
+export function getCurrentReadings(payload) {
   if (
     payload?.dataStatus !== 'available' ||
     !Array.isArray(payload.readings)
@@ -99,7 +96,9 @@ function getCurrentReadings(payload) {
 
     const value = Number(reading.value);
     const unit = reading.unit;
-    const timestamp = Date.parse(reading.timestamp);
+    // CRITICAL FIX: air-quality.js returns reading.time, but reading.timestamp fallback is also supported
+    const rawTime = reading.time || reading.timestamp;
+    const timestamp = Date.parse(rawTime);
 
     if (
       !Number.isFinite(value) ||
@@ -127,7 +126,8 @@ function getCurrentReadings(payload) {
       currentReadings[parameter] = {
         value,
         unit,
-        timestamp
+        timestamp,
+        time: rawTime
       };
     }
   }
@@ -135,7 +135,7 @@ function getCurrentReadings(payload) {
   return currentReadings;
 }
 
-function findExceededThresholds(preference, readings) {
+export function findExceededThresholds(preference, readings) {
   const pollutants = Array.isArray(preference.pollutants)
     ? preference.pollutants
     : [];
@@ -179,7 +179,7 @@ function findExceededThresholds(preference, readings) {
   return exceeded;
 }
 
-function buildEmailHtml(exceeded) {
+export function buildEmailHtml(exceeded, unsubscribeUrl, appUrl) {
   const rows = exceeded.map(item => `
     <tr>
       <td style="padding:12px;border-bottom:1px solid #e5ebe5">
@@ -241,14 +241,20 @@ function buildEmailHtml(exceeded) {
         </p>
 
         <p style="margin-top:24px">
-          <a href="${escapeHtml(process.env.APP_URL)}"
-             style="display:inline-block;padding:11px 18px;background:#315b3d;color:white;text-decoration:none;border-radius:6px">
+          <a href="${escapeHtml(appUrl)}"
+             style="display:inline-block;padding:11px 18px;background:#315b3d;color:white;text-decoration:none;border-radius:6px;font-weight:600">
             Open AirMesh
           </a>
         </p>
 
-        <p style="font-size:12px;color:#849087">
-          AirMesh · Breathe with awareness
+        <hr style="border:0;border-top:1px solid #e1e9e1;margin:28px 0 16px" />
+
+        <p style="font-size:12px;color:#849087;line-height:1.5">
+          AirMesh · Breathe with awareness<br/>
+          You received this email because you subscribed to daily threshold notifications from AirMesh.<br/>
+          <a href="${escapeHtml(unsubscribeUrl)}" style="color:#b35456;text-decoration:underline">
+            Unsubscribe from all alerts
+          </a>
         </p>
       </div>
     </div>
@@ -272,19 +278,15 @@ export default async function handler(req, res) {
     const appUrl = process.env.APP_URL;
     const fromEmail = process.env.RESEND_FROM_EMAIL;
 
-    if (
-      !appUrl ||
-      !fromEmail ||
-      !process.env.RESEND_API_KEY ||
-      !process.env.SUPABASE_URL ||
-      !process.env.SUPABASE_SERVICE_ROLE_KEY
-    ) {
+    if (!appUrl || !fromEmail) {
       throw new Error(
-        'AirMesh notification environment variables are incomplete.'
+        'AirMesh notification environment variables are incomplete (APP_URL or RESEND_FROM_EMAIL).'
       );
     }
 
-    // Fetch the deployed AirMesh API, not frontend or stale cached data.
+    const supabase = getSupabase();
+    const resend = getResend();
+
     const readingsResponse = await fetch(
       `${appUrl.replace(/\/$/, '')}/api/air-quality`,
       {
@@ -388,12 +390,15 @@ export default async function handler(req, res) {
         continue;
       }
 
+      const sig = generateUnsubscribeSignature(subscriber.id);
+      const unsubscribeUrl = `${appUrl.replace(/\/$/, '')}/api/unsubscribe?id=${subscriber.id}&sig=${sig}`;
+
       try {
         const { error: emailError } = await resend.emails.send({
           from: fromEmail,
           to: [subscriber.email],
           subject: 'AirMesh: Your selected air-quality threshold was exceeded',
-          html: buildEmailHtml(exceeded),
+          html: buildEmailHtml(exceeded, unsubscribeUrl, appUrl),
           text: [
             'AirMesh daily air-quality notification',
             '',
@@ -404,7 +409,9 @@ export default async function handler(req, res) {
             ),
             '',
             'These are threshold notifications, not official CPCB AQI readings or medical advice.',
-            `Open AirMesh: ${appUrl}`
+            `Open AirMesh: ${appUrl}`,
+            '',
+            `Unsubscribe: ${unsubscribeUrl}`
           ].join('\n')
         });
 

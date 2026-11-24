@@ -1,10 +1,6 @@
 import { createHash } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { getSupabase } from './_supabase.js';
+import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const ALLOWED_UNITS = {
   pm25: 'µg/m³',
@@ -21,6 +17,8 @@ async function getPreference(token) {
   if (!/^[a-f0-9]{64}$/i.test(token)) {
     return null;
   }
+
+  const supabase = getSupabase();
 
   const tokenHash = createHash('sha256')
     .update(token)
@@ -49,7 +47,16 @@ async function getPreference(token) {
 }
 
 export default async function handler(req, res) {
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`manage:${ip}`, 20, 60 * 1000)) {
+    return res.status(429).json({
+      error: 'Too many requests. Please wait a moment before trying again.'
+    });
+  }
+
   try {
+    const supabase = getSupabase();
+
     if (req.method === 'GET') {
       const token = String(req.query?.token || '');
 
@@ -125,6 +132,7 @@ export default async function handler(req, res) {
         };
       }
 
+      // Invalidate management token upon saving (Security Best Practice M5)
       const { error: updateError } = await supabase
         .from('air_alert_preferences')
         .update({
@@ -133,6 +141,8 @@ export default async function handler(req, res) {
           pollutants,
           thresholds,
           frequency: 'important',
+          management_token_hash: null,
+          management_token_expires_at: null,
           updated_at: new Date().toISOString()
         })
         .eq('subscriber_id', preference.subscriber_id);

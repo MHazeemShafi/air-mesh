@@ -1,14 +1,7 @@
-
 import { createHash, randomBytes } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getSupabase } from './_supabase.js';
+import { getResend } from './_resend.js';
+import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const hashToken = token =>
   createHash('sha256').update(token).digest('hex');
@@ -20,7 +13,17 @@ export default async function handler(req, res) {
     });
   }
 
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`req-settings:${ip}`, 5, 60 * 1000)) {
+    return res.status(429).json({
+      error: 'Too many requests. Please wait a minute before requesting another settings link.'
+    });
+  }
+
   try {
+    const supabase = getSupabase();
+    const resend = getResend();
+
     const email = String(req.body?.email || '')
       .trim()
       .toLowerCase();
@@ -79,13 +82,9 @@ export default async function handler(req, res) {
     const appUrl = process.env.APP_URL;
     const fromEmail = process.env.RESEND_FROM_EMAIL;
 
-    if (
-      !appUrl ||
-      !fromEmail ||
-      !process.env.RESEND_API_KEY
-    ) {
+    if (!appUrl || !fromEmail) {
       throw new Error(
-        'Email service configuration is incomplete.'
+        'Email service configuration is incomplete (APP_URL or RESEND_FROM_EMAIL).'
       );
     }
 
@@ -103,7 +102,7 @@ export default async function handler(req, res) {
           <p>You requested a secure link to manage your AirMesh notification preferences.</p>
           <p>
             <a href="${settingsUrl}"
-              style="display:inline-block;background:#315b3d;color:white;padding:12px 20px;text-decoration:none;border-radius:6px">
+              style="display:inline-block;background:#315b3d;color:white;padding:12px 20px;text-decoration:none;border-radius:6px;font-weight:600">
               Manage alert settings
             </a>
           </p>

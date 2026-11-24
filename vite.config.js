@@ -1,4 +1,4 @@
-﻿import { defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://airmesh-final.vercel.app',
+        target: process.env.VITE_API_URL || 'https://airmesh-final.vercel.app',
         changeOrigin: true,
         secure: true,
       },

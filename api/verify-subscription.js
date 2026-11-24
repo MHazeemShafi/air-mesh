@@ -1,12 +1,9 @@
 import { createHash } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from './_supabase.js';
+import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-function createPage(title, message) {
+function createPage(title, message, isSuccess = false) {
+  const accentColor = isSuccess ? '#a5d7aa' : '#f5b4b6';
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -23,29 +20,47 @@ function createPage(title, message) {
             place-items: center;
             background: #101914;
             color: #e7efe7;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 16px;
+            box-sizing: border-box;
           }
 
           main {
             max-width: 520px;
+            width: 100%;
             margin: 24px;
             padding: 32px;
             background: #19261e;
             border: 1px solid #314438;
             border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
           }
 
           h1 {
-            color: #a5d7aa;
+            color: ${accentColor};
+            margin-top: 0;
+            font-size: 24px;
           }
 
           p {
             line-height: 1.7;
             color: #c3d0c5;
+            font-size: 15px;
           }
 
-          a {
-            color: #a5d7aa;
+          a.return-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: #245d3c;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background 0.2s;
+          }
+          a.return-btn:hover {
+            background: #2e734b;
           }
         </style>
       </head>
@@ -55,7 +70,7 @@ function createPage(title, message) {
           <h1>${title}</h1>
           <p>${message}</p>
           <p>
-            <a href="${process.env.APP_URL || '/'}">
+            <a href="${process.env.APP_URL || '/'}" class="return-btn">
               Return to AirMesh
             </a>
           </p>
@@ -70,6 +85,11 @@ export default async function handler(req, res) {
     return res.status(405).send('Method not allowed');
   }
 
+  const ip = getClientIp(req);
+  if (!checkRateLimit(`verify:${ip}`, 20, 60 * 1000)) {
+    return res.status(429).send(createPage('Too Many Requests', 'Please wait a moment before trying again.', false));
+  }
+
   try {
     const token = String(req.query?.token || '');
 
@@ -77,7 +97,8 @@ export default async function handler(req, res) {
       return res.status(400).send(
         createPage(
           'Invalid link',
-          'This verification link is invalid.'
+          'This verification link is invalid or malformed.',
+          false
         )
       );
     }
@@ -85,6 +106,8 @@ export default async function handler(req, res) {
     const tokenHash = createHash('sha256')
       .update(token)
       .digest('hex');
+
+    const supabase = getSupabase();
 
     const { data: subscriber, error } = await supabase
       .from('email_subscribers')
@@ -102,8 +125,9 @@ export default async function handler(req, res) {
     if (!subscriber) {
       return res.status(400).send(
         createPage(
-          'Link expired',
-          'This link has expired or has already been used. Please request a new verification link.'
+          'Link expired or already used',
+          'This verification link has expired or has already been used. If you still need alerts, please subscribe again or request a settings link.',
+          false
         )
       );
     }
@@ -115,7 +139,8 @@ export default async function handler(req, res) {
         is_active: true,
         verified_at: new Date().toISOString(),
         verification_token_hash: null,
-        verification_expires_at: null
+        verification_expires_at: null,
+        updated_at: new Date().toISOString()
       })
       .eq('id', subscriber.id);
 
@@ -124,7 +149,8 @@ export default async function handler(req, res) {
     return res.status(200).send(
       createPage(
         'Email verified',
-        'Your AirMesh email address is verified. Your selected daily notification preferences are now eligible for scheduled checks. Emails are sent only when a selected threshold is exceeded and fresh readings are available.'
+        'Your AirMesh email address is now verified! Your daily air-quality notification preferences are activated. AirMesh will evaluate fresh CPCB readings each day and notify you only when your configured thresholds are exceeded.',
+        true
       )
     );
 
@@ -134,7 +160,8 @@ export default async function handler(req, res) {
     return res.status(500).send(
       createPage(
         'Something went wrong',
-        'We could not verify your subscription right now. Please try again later.'
+        'We could not verify your subscription right now. Please try again later.',
+        false
       )
     );
   }
