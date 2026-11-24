@@ -76,7 +76,6 @@ body {
   font-weight: 400;
   color: var(--text-main);
   background-color: var(--bg);
-  min-width: 320px;
   min-height: 100vh;
   line-height: 1.55;
   font-synthesis: none;
@@ -861,7 +860,7 @@ body {
 
 .pollutant-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   gap: 12px;
   margin: 16px 0;
 }
@@ -1663,6 +1662,29 @@ body {
 }
 
 @media (max-width: 600px) {
+  .page-title h1 {
+    font-size: clamp(1.8rem, 10vw, 2.2rem);
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .topbar-left {
+    flex-shrink: 0;
+    min-width: 0;
+  }
+
+  .breadcrumb {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .topbar-actions {
+    margin-left: auto;
+  }
+
   .quick-stats,
   .quality-grid,
   .measurement-summary {
@@ -1674,5 +1696,20 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pollutant-item {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .pollutant-value {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    grid-column: 2;
+    text-align: left;
   }
 }

@@ -77,13 +77,18 @@
 
 .email-layout {
   display: grid;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 28px;
   background: var(--white);
   border: var(--border-width) solid var(--alert-navy);
   box-shadow: var(--shadow-md);
   padding: 32px;
   margin-bottom: 28px;
+}
+
+.email-layout > *,
+.alert-existing-panel > * {
+  min-width: 0;
 }
 
 .email-intro {
@@ -180,7 +185,7 @@
 
 .alert-profile-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: 10px;
   margin: 12px 0 16px;
 }
@@ -347,8 +352,10 @@
 
 .alert-threshold-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 8px 12px;
   background: var(--white);
   border: 1px solid var(--alert-navy);
@@ -394,6 +401,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-left: auto;
 }
 
 .alert-threshold-input input {
@@ -513,7 +521,7 @@
 @media (max-width: 900px) {
   .email-layout,
   .alert-existing-panel {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .alert-profile-options {
