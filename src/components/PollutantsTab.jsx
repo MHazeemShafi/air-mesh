@@ -1,4 +1,3 @@
-import React from 'react';
 import { Info } from 'lucide-react';
 import { POLLUTANTS, WEATHER } from '../constants';
 import { formatTime } from '../utils/formatters';

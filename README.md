@@ -3,7 +3,7 @@
 [![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Resend](https://img.shields.io/badge/Resend-Email_API-000000?logo=resend&logoColor=white)](https://resend.com/)
+[![Brevo](https://img.shields.io/badge/Brevo-Email_API-0B996E)](https://www.brevo.com/)
 [![OpenAQ](https://img.shields.io/badge/OpenAQ-v3_CPCB_Data-4A90E2)](https://openaq.org/)
 [![Tests](https://img.shields.io/badge/Tests-Passing_100%25-brightgreen)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -33,7 +33,7 @@ flowchart TD
     end
 
     subgraph Notifications
-        F -->|Trigger threshold exceeded| L[Resend API]
+        F -->|Trigger threshold exceeded| L[Brevo API]
         L -->|HTML email with 1-click unsubscribe| M[Subscribers Inbox]
     end
 
@@ -83,7 +83,7 @@ flowchart TD
 | **Charts & Icons** | Recharts 2.15 & Lucide React | Visual analytics and iconography |
 | **Serverless API** | Node.js Serverless Functions | Edge-compatible API routes on Vercel |
 | **Database** | Supabase (PostgreSQL 15+) | Subscriber store with Row Level Security |
-| **Email Service** | Resend API | Transactional verification & alert emails |
+| **Email Service** | Brevo API | Transactional verification & alert emails |
 | **Data Provider** | OpenAQ API v3 | Central Pollution Control Board (CPCB) feed |
 | **Hosting & CI/CD** | Vercel | Production hosting with automated crons |
 | **Testing** | Node.js Test Runner (`node:test`) | Unit tests for data, alert logic & security |
@@ -96,7 +96,7 @@ flowchart TD
 air-mesh/
 ├── api/                             # Serverless backend API routes
 │   ├── _rate-limit.js               # Sliding-window IP rate limiter
-│   ├── _resend.js                   # Lazy-initialized Resend client
+│   ├── _lib/send-brevo.js           # Shared Brevo email sender
 │   ├── _supabase.js                 # Lazy-initialized Supabase client
 │   ├── air-quality.js               # OpenAQ data fetcher & validator
 │   ├── daily-respiratory-alerts.js  # Scheduled cron evaluator & mailer
@@ -145,7 +145,7 @@ air-mesh/
 - **Node.js**: v18.0.0 or higher (v20+ recommended)
 - **npm**: v9.0.0 or higher
 - **Supabase Account**: Free tier PostgreSQL database
-- **Resend Account**: Free tier transactional email API key
+- **Brevo Account**: API key and verified sender email
 - **OpenAQ API Key**: Free API key from [openaq.org](https://openaq.org/)
 
 ### 1. Clone the Repository
@@ -170,8 +170,9 @@ Fill in your credentials:
 OPENAQ_API_KEY=your_openaq_api_key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-RESEND_API_KEY=re_your_resend_api_key
-RESEND_FROM_EMAIL=AirMesh <alerts@yourdomain.com>
+BREVO_API_KEY=your_brevo_api_key
+BREVO_FROM_EMAIL=alerts@yourdomain.com
+BREVO_FROM_NAME=AirMesh
 APP_URL=http://localhost:5173
 CRON_SECRET=your_32_character_random_cron_secret
 ```
@@ -203,12 +204,12 @@ Open `http://localhost:5173` in your browser.
 
 1. Push your repository to GitHub.
 2. Import the project into [Vercel](https://vercel.com/).
-3. Add the 6 required environment variables in **Project Settings -> Environment Variables**:
+3. Add the 7 required environment variables in **Project Settings -> Environment Variables**:
    - `OPENAQ_API_KEY`
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `RESEND_API_KEY`
-   - `RESEND_FROM_EMAIL`
+   - `BREVO_API_KEY`
+   - `BREVO_FROM_EMAIL`
    - `APP_URL` (set to your Vercel deployment URL, e.g. `https://airmesh.vercel.app`)
    - `CRON_SECRET`
 4. Deploy! Vercel will automatically configure the daily cron trigger defined in `vercel.json`:
@@ -236,7 +237,7 @@ Open `http://localhost:5173` in your browser.
    > *"We employ SHA-256 one-way hashing for all verification and management tokens. Only the hashed digest is persisted in Supabase; the raw token is only present in the user's email link. Even in the event of an unauthorized database read, an attacker cannot forge verification requests or hijack management links."*
 
 2. **How does the alert system prevent duplicate emails?**
-   > *"The daily cron records the India Standard Time date (`last_notification_date`) in the subscriber's preference record. Before evaluating thresholds, the system checks whether today's date is already recorded. Furthermore, the timestamp is only committed to the database after Resend accepts the message, ensuring failed email deliveries are not incorrectly counted."*
+   > *"The daily cron records the India Standard Time date (`last_notification_date`) in the subscriber's preference record. Before evaluating thresholds, the system checks whether today's date is already recorded. Furthermore, the timestamp is only committed to the database after Brevo accepts the message, ensuring failed email deliveries are not incorrectly counted."*
 
 3. **Why does the dashboard display raw PM2.5 concentrations instead of an AQI?**
    > *"An official National Air Quality Index (NAQI) prescribed by the CPCB requires a minimum 16-hour data completeness criteria across at least three pollutants (including PM10 or PM2.5) to compute mathematical sub-indices. Displaying instantaneous sensor readings as a pseudo-AQI is scientifically inaccurate. AirMesh displays raw concentrations in standard units (µg/m³, ppb) with explicit transparency disclaimers."*

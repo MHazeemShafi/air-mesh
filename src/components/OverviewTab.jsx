@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Activity, AlertCircle, AlertTriangle, ArrowUpRight,
   Clock, Cloud, Database, HeartPulse, Info, MapPin, Radio, RefreshCw

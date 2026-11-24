@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertCircle, ArrowUpRight, Bell, CheckCircle2,
   Clock, HeartPulse, Info, Mail, RefreshCw, Save,

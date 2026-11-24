@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { getSupabase } from './_supabase.js';
-import { getResend } from './_resend.js';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const ALLOWED_POLLUTANTS = [
@@ -78,7 +78,6 @@ export default async function handler(req, res) {
 
   try {
     const supabase = getSupabase();
-    const resend = getResend();
 
     const email = String(req.body?.email || '')
       .trim()
@@ -92,6 +91,9 @@ export default async function handler(req, res) {
         error: 'Enter a valid email address.'
       });
     }
+
+    const genericMessage =
+      'If this address can be subscribed, a verification link will be sent.';
 
     const preferences = cleanPreferences(
       req.body?.preferences || req.body
@@ -107,10 +109,8 @@ export default async function handler(req, res) {
     if (lookupError) throw lookupError;
 
     if (existing?.is_verified && existing?.is_active) {
-      return res.status(409).json({
-        alreadySubscribed: true,
-        error:
-          'This email is already subscribed. Request a secure settings link to change your preferences.'
+      return res.status(200).json({
+        message: genericMessage
       });
     }
 
@@ -180,26 +180,19 @@ export default async function handler(req, res) {
 
     if (preferenceError) throw preferenceError;
 
-    if (
-      !process.env.APP_URL ||
-      !process.env.RESEND_FROM_EMAIL
-    ) {
-      throw new Error(
-        'Email service configuration is incomplete (APP_URL or RESEND_FROM_EMAIL).'
-      );
+    if (!process.env.APP_URL) {
+      throw new Error('APP_URL is not configured.');
     }
 
     const verificationUrl =
       `${process.env.APP_URL.replace(/\/$/, '')}` +
       `/api/verify-subscription?token=${token}`;
 
-    const { error: emailError } =
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL,
-        to: email,
-        subject: 'Confirm your AirMesh email alerts',
+    await sendBrevoEmail({
+      to: email,
+      subject: 'Confirm your AirMesh email alerts',
 
-        html: `
+      htmlContent: `
           <div style="
             font-family:Arial,sans-serif;
             max-width:560px;
@@ -235,7 +228,7 @@ export default async function handler(req, res) {
           </div>
         `,
 
-        text: `
+      textContent: `
 Confirm your AirMesh subscription:
 
 ${verificationUrl}
@@ -244,11 +237,8 @@ This link expires in 24 hours.
         `
       });
 
-    if (emailError) throw emailError;
-
     return res.status(200).json({
-      message:
-        'Check your inbox for a verification link. Your selected preferences activate after verification.'
+      message: genericMessage
     });
 
   } catch (error) {

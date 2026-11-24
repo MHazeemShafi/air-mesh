@@ -1,4 +1,3 @@
-import React from 'react';
 import { Menu, RefreshCw } from 'lucide-react';
 
 export default function Topbar({

@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { getSupabase } from './_supabase.js';
-import { getResend } from './_resend.js';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 import { checkRateLimit, getClientIp } from './_rate-limit.js';
 
 const hashToken = token =>
@@ -22,7 +22,6 @@ export default async function handler(req, res) {
 
   try {
     const supabase = getSupabase();
-    const resend = getResend();
 
     const email = String(req.body?.email || '')
       .trim()
@@ -80,23 +79,19 @@ export default async function handler(req, res) {
     if (updateError) throw updateError;
 
     const appUrl = process.env.APP_URL;
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
 
-    if (!appUrl || !fromEmail) {
-      throw new Error(
-        'Email service configuration is incomplete (APP_URL or RESEND_FROM_EMAIL).'
-      );
+    if (!appUrl) {
+      throw new Error('APP_URL is not configured.');
     }
 
     // Must match the URL parameter read by App.jsx.
     const settingsUrl =
       `${appUrl.replace(/\/$/, '')}/?manageAlerts=${token}`;
 
-    const { error: emailError } = await resend.emails.send({
-      from: fromEmail,
-      to: [subscriber.email],
+    await sendBrevoEmail({
+      to: subscriber.email,
       subject: 'Your AirMesh alert settings link',
-      html: `
+      htmlContent: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#24352a;line-height:1.6">
           <h2 style="color:#315b3d">Manage your AirMesh alerts</h2>
           <p>You requested a secure link to manage your AirMesh notification preferences.</p>
@@ -111,10 +106,8 @@ export default async function handler(req, res) {
           <p style="color:#718075;font-size:12px">AirMesh · Breathe with awareness</p>
         </div>
       `,
-      text: `Manage your AirMesh alert settings: ${settingsUrl}\n\nThis link expires in 30 minutes. If you did not request it, ignore this email.`
+      textContent: `Manage your AirMesh alert settings: ${settingsUrl}\n\nThis link expires in 30 minutes. If you did not request it, ignore this email.`
     });
-
-    if (emailError) throw emailError;
 
     return res.status(200).json({
       message: genericMessage

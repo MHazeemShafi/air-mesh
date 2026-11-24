@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { getSupabase } from './_supabase.js';
-import { getResend } from './_resend.js';
+import { sendBrevoEmail } from './_lib/send-brevo.js';
 
 const MAX_READING_AGE_MS = 24 * 60 * 60 * 1000;
 const FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
@@ -276,16 +276,12 @@ export default async function handler(req, res) {
 
   try {
     const appUrl = process.env.APP_URL;
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
 
-    if (!appUrl || !fromEmail) {
-      throw new Error(
-        'AirMesh notification environment variables are incomplete (APP_URL or RESEND_FROM_EMAIL).'
-      );
+    if (!appUrl) {
+      throw new Error('APP_URL is not configured.');
     }
 
     const supabase = getSupabase();
-    const resend = getResend();
 
     const readingsResponse = await fetch(
       `${appUrl.replace(/\/$/, '')}/api/air-quality`,
@@ -394,12 +390,11 @@ export default async function handler(req, res) {
       const unsubscribeUrl = `${appUrl.replace(/\/$/, '')}/api/unsubscribe?id=${subscriber.id}&sig=${sig}`;
 
       try {
-        const { error: emailError } = await resend.emails.send({
-          from: fromEmail,
-          to: [subscriber.email],
+        await sendBrevoEmail({
+          to: subscriber.email,
           subject: 'AirMesh: Your selected air-quality threshold was exceeded',
-          html: buildEmailHtml(exceeded, unsubscribeUrl, appUrl),
-          text: [
+          htmlContent: buildEmailHtml(exceeded, unsubscribeUrl, appUrl),
+          textContent: [
             'AirMesh daily air-quality notification',
             '',
             'One or more of your selected thresholds were exceeded.',
@@ -415,9 +410,7 @@ export default async function handler(req, res) {
           ].join('\n')
         });
 
-        if (emailError) throw emailError;
-
-        // Record the date only after Resend accepts the email.
+        // Record the date only after Brevo accepts the email.
         const { error: updateError } = await supabase
           .from('air_alert_preferences')
           .update({
