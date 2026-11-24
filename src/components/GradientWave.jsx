@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 
 function normalizeColor(hexCode) {
@@ -12,7 +11,7 @@ function normalizeColor(hexCode) {
 class MiniGl {
   constructor(canvas) {
     this.canvas = canvas;
-    this.gl = canvas.getContext("webgl", { antialias: true });
+    this.gl = canvas.getContext("webgl", { antialias: true, alpha: true });
 
     if (!this.gl) throw new Error("WebGL not supported");
 
@@ -338,7 +337,7 @@ class MiniGl {
   }
 
   render() {
-    this.gl.clearColor(0, 0, 0, 0);
+    this.gl.clearColor(0.918, 0.957, 0.984, 1.0); // Pale ice-blue background #EAF4FB
     this.gl.clearDepth(1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     this.meshes.forEach((mesh) => mesh.draw());
@@ -364,7 +363,7 @@ class Gradient {
 
     const uniforms = {
       u_time: new this.minigl.Uniform({ value: 0 }),
-      u_shadow_power: new this.minigl.Uniform({ value: 6 }),
+      u_shadow_power: new this.minigl.Uniform({ value: 3 }),
       u_darken_top: new this.minigl.Uniform({ value: 0 }),
       u_active_colors: new this.minigl.Uniform({
         value: [1, 1, 1, 1],
@@ -373,23 +372,23 @@ class Gradient {
       u_global: new this.minigl.Uniform({
         value: {
           noiseFreq: new this.minigl.Uniform({
-            value: [0.0001, 0.0005],
+            value: [0.00008, 0.0003],
             type: "vec2",
           }),
-          noiseSpeed: new this.minigl.Uniform({ value: 0.000008 }),
+          noiseSpeed: new this.minigl.Uniform({ value: 0.000005 }),
         },
         type: "struct",
       }),
       u_vertDeform: new this.minigl.Uniform({
         value: {
-          incline: new this.minigl.Uniform({ value: 0.25 }),
-          offsetTop: new this.minigl.Uniform({ value: -0.5 }),
-          offsetBottom: new this.minigl.Uniform({ value: -0.5 }),
-          noiseFreq: new this.minigl.Uniform({ value: [3, 4], type: "vec2" }),
-          noiseAmp: new this.minigl.Uniform({ value: 110 }),
-          noiseSpeed: new this.minigl.Uniform({ value: 10 }),
-          noiseFlow: new this.minigl.Uniform({ value: 3 }),
-          noiseSeed: new this.minigl.Uniform({ value: 5 }),
+          incline: new this.minigl.Uniform({ value: 0.18 }),
+          offsetTop: new this.minigl.Uniform({ value: -0.4 }),
+          offsetBottom: new this.minigl.Uniform({ value: -0.4 }),
+          noiseFreq: new this.minigl.Uniform({ value: [2.5, 3.5], type: "vec2" }),
+          noiseAmp: new this.minigl.Uniform({ value: 80 }),
+          noiseSpeed: new this.minigl.Uniform({ value: 8 }),
+          noiseFlow: new this.minigl.Uniform({ value: 2.2 }),
+          noiseSeed: new this.minigl.Uniform({ value: 4 }),
         },
         type: "struct",
         excludeFrom: "fragment",
@@ -415,14 +414,14 @@ class Gradient {
               type: "vec3",
             }),
             noiseFreq: new this.minigl.Uniform({
-              value: [2 + i / sectionColors.length, 3 + i / sectionColors.length],
+              value: [1.8 + i / sectionColors.length, 2.5 + i / sectionColors.length],
               type: "vec2",
             }),
-            noiseSpeed: new this.minigl.Uniform({ value: 11 + 0.3 * i }),
-            noiseFlow: new this.minigl.Uniform({ value: 6.5 + 0.3 * i }),
-            noiseSeed: new this.minigl.Uniform({ value: 5 + 10 * i }),
-            noiseFloor: new this.minigl.Uniform({ value: 0.1 }),
-            noiseCeil: new this.minigl.Uniform({ value: 0.63 + 0.07 * i }),
+            noiseSpeed: new this.minigl.Uniform({ value: 8 + 0.25 * i }),
+            noiseFlow: new this.minigl.Uniform({ value: 4.5 + 0.2 * i }),
+            noiseSeed: new this.minigl.Uniform({ value: 3 + 8 * i }),
+            noiseFloor: new this.minigl.Uniform({ value: 0.08 }),
+            noiseCeil: new this.minigl.Uniform({ value: 0.55 + 0.05 * i }),
           },
           type: "struct",
         })
@@ -512,7 +511,7 @@ void main() {
           time * layer.noiseSpeed + layer.noiseSeed
         )) / 2.0 + 0.5
       );
-      v_color = blendNormal(v_color, layer.color, pow(layerNoise, 4.));
+      v_color = blendNormal(v_color, layer.color, pow(layerNoise, 3.5));
     }
   }
 
@@ -524,10 +523,6 @@ varying vec3 v_color;
 
 void main() {
   vec3 color = v_color;
-  if (u_darken_top == 1.0) {
-    vec2 st = gl_FragCoord.xy / resolution.xy;
-    color.g -= pow(st.y + sin(-12.0) * st.x, u_shadow_power) * 0.4;
-  }
   gl_FragColor = vec4(color, 1.0);
 }`;
 
@@ -579,7 +574,8 @@ void main() {
 }
 
 export default function GradientWave({
-  colors = ["#10243A", "#244B6A", "#6FAED2", "#193B59", "#A9D3E8", "#142B43"],
+  // Atmospheric Blue Palette: Ice blue, mist, sky blue, white highlights
+  colors = ["#EAF4FB", "#D7EAF6", "#B9D9EF", "#CBE3F3", "#FFFFFF", "#D2E7F5"],
   isPlaying = true,
   className = "",
 }) {
@@ -606,7 +602,7 @@ export default function GradientWave({
       gradient = new Gradient(canvas, colors);
       if (isPlaying) gradient.start();
     } catch (error) {
-      console.error("Failed to initialize gradient:", error);
+      console.error("Failed to initialize atmospheric gradient:", error);
     }
 
     return () => {
