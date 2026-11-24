@@ -7,6 +7,7 @@ import PollutantsTab from './components/PollutantsTab';
 import StationTab from './components/StationTab';
 import HealthTab from './components/HealthTab';
 import AlertsTab from './components/AlertsTab';
+import AIHelper from './components/AIHelper/AIHelper.jsx';
 
 import {
   API_URL, REFRESH_INTERVAL, DEFAULT_THRESHOLDS,
@@ -502,6 +503,7 @@ export default function App() {
             ))}
           </nav>
         </div>
+        <AIHelper pageContext={activeTab} />
       </div>
     </>
   );

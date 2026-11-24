@@ -71,6 +71,11 @@ flowchart TD
 - **Zero Client-Side Secret Leakage**: Service-role keys and email API tokens remain strictly confined to serverless functions.
 - **Strict Row Level Security (RLS)**: Public anonymous access to database tables is disabled; all queries go through backend API routes.
 
+### 5. AirMesh AI Assistant
+- **Floating Chat Guide**: Ask questions about AirMesh, pollutants, readings, health guidance, and email alerts from any page.
+- **Server-Side Groq Integration**: The Groq API key is used only by the Vercel function and is never included in the frontend bundle.
+- **Contextual Live Readings**: Questions about current conditions reuse `/api/air-quality`; current, stale, and invalid measurements remain distinct, and the assistant does not infer an official AQI.
+
 ---
 
 ## Tech Stack
@@ -84,6 +89,7 @@ flowchart TD
 | **Serverless API** | Node.js Serverless Functions | Edge-compatible API routes on Vercel |
 | **Database** | Supabase (PostgreSQL 15+) | Subscriber store with Row Level Security |
 | **Email Service** | Brevo API | Transactional verification & alert emails |
+| **AI Assistant** | Groq SDK | Server-side AirMesh Q&A and contextual readings |
 | **Data Provider** | OpenAQ API v3 | Central Pollution Control Board (CPCB) feed |
 | **Hosting & CI/CD** | Vercel | Production hosting with automated crons |
 | **Testing** | Node.js Test Runner (`node:test`) | Unit tests for data, alert logic & security |
@@ -99,6 +105,7 @@ air-mesh/
 │   ├── _lib/send-brevo.js           # Shared Brevo email sender
 │   ├── _supabase.js                 # Lazy-initialized Supabase client
 │   ├── air-quality.js               # OpenAQ data fetcher & validator
+│   ├── ai-assistant.js              # Rate-limited Groq assistant endpoint
 │   ├── daily-respiratory-alerts.js  # Scheduled cron evaluator & mailer
 │   ├── manage-alert-settings.js     # Token-verified settings loader/saver
 │   ├── request-alert-settings.js    # Magic link email dispatcher
@@ -109,6 +116,7 @@ air-mesh/
 │   ├── components/                  # Accessible UI components
 │   │   ├── Accordion.jsx            # Accessible collapsible panel
 │   │   ├── AlertsTab.jsx            # Email alert subscription & settings view
+│   │   ├── AIHelper/                 # Floating assistant and chat styling
 │   │   ├── GradientWave.jsx         # Ambient CSS wave animation
 │   │   ├── HealthTab.jsx            # Health & exposure guidelines
 │   │   ├── MapView.jsx              # Leaflet station map with Vite asset fix
@@ -127,6 +135,7 @@ air-mesh/
 │   └── schema.sql                   # Full PostgreSQL DDL, indexes & RLS policies
 ├── tests/                           # Automated test suite
 │   ├── air-quality.test.js          # Telemetry validation & filtering tests
+│   ├── ai-assistant.test.js         # Assistant API and live-context tests
 │   ├── alert-logic.test.js          # Threshold evaluation & date logic tests
 │   ├── formatters.test.js           # UI formatting & freshness helper tests
 │   └── security.test.js             # Token hashing, XSS escaping & auth tests
@@ -147,6 +156,7 @@ air-mesh/
 - **Supabase Account**: Free tier PostgreSQL database
 - **Brevo Account**: API key and verified sender email
 - **OpenAQ API Key**: Free API key from [openaq.org](https://openaq.org/)
+- **Groq API Key**: Server-side key for the AirMesh assistant
 
 ### 1. Clone the Repository
 ```bash
@@ -173,9 +183,13 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 BREVO_API_KEY=your_brevo_api_key
 BREVO_FROM_EMAIL=alerts@yourdomain.com
 BREVO_FROM_NAME=AirMesh
-APP_URL=http://localhost:5173
+GROQ_API_KEY=your_groq_api_key
+APP_URL=http://localhost:3000
 CRON_SECRET=your_32_character_random_cron_secret
 ```
+
+Keep `GROQ_API_KEY` server-side; never prefix it with `VITE_`. Use the Vercel
+CLI on `http://localhost:3000` for local serverless API testing.
 
 ### 4. Initialize Database Schema
 1. Open your [Supabase Dashboard](https://supabase.com/dashboard).
@@ -188,7 +202,7 @@ Execute the automated test suite:
 ```bash
 npm test
 ```
-All unit and security tests will execute in under a second using Node's native test runner.
+Tests run with Node's native test runner and typically complete within a few seconds.
 
 ### 6. Start Development Server
 ```bash
@@ -204,12 +218,13 @@ Open `http://localhost:5173` in your browser.
 
 1. Push your repository to GitHub.
 2. Import the project into [Vercel](https://vercel.com/).
-3. Add the 7 required environment variables in **Project Settings -> Environment Variables**:
+3. Add the 8 required environment variables in **Project Settings -> Environment Variables**:
    - `OPENAQ_API_KEY`
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `BREVO_API_KEY`
    - `BREVO_FROM_EMAIL`
+   - `GROQ_API_KEY`
    - `APP_URL` (set to your Vercel deployment URL, e.g. `https://airmesh.vercel.app`)
    - `CRON_SECRET`
 4. Deploy! Vercel will automatically configure the daily cron trigger defined in `vercel.json`:
